@@ -61,10 +61,10 @@ NAMESPACE_PACAKGES = ["orangecontrib", "orangecontrib.wise2", "orangecontrib.wis
 ENTRY_POINTS = {
     'oasys.addons' : ("wise = orangecontrib.wise", ),
     'oasys.widgets' : (
-        "WISE 2 Light Sources = orangecontrib.wise2.widgets.light_sources",
-        "WISE 2 Optical Elements = orangecontrib.wise2.widgets.optical_elements",
-        "WISE 2 Tools = orangecontrib.wise2.widgets.tools",
-        "WISE 2 Wofry = orangecontrib.wise2.widgets.wofry",
+        "WISEr Light Sources = orangecontrib.wise2.widgets.light_sources",
+        "WISEr Optical Elements = orangecontrib.wise2.widgets.optical_elements",
+        "WISEr Tools = orangecontrib.wise2.widgets.tools",
+        "WISEr Wofry = orangecontrib.wise2.widgets.wofry",
     ),
 }
 

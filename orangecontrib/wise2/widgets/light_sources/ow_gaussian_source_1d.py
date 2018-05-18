@@ -69,10 +69,14 @@ class OWGaussianSource1d(WiseWidget):
         self.source_waist = congruence.checkStrictlyPositiveNumber(self.source_waist, "Waist")
 
     def do_wise_calculation(self):
+        position_directives = self.get_PositionDirectives()
+        position_directives.WhichAngle = Optics.TypeOfAngle.SelfFrameOfReference
+        position_directives.Angle = 0.0
+
         wise_source = WiseGaussianSource(name=self.source_name,
                                          source_gaussian=Optics.SourceGaussian(self.source_lambda*1e-9,
                                                                                self.source_waist*self.workspace_units_to_m) ,
-                           position_directives=self.get_PositionDirectives())
+                                         position_directives=position_directives)
 
         data_to_plot = numpy.zeros((2, 100))
 
@@ -98,7 +102,6 @@ class OWGaussianSource1d(WiseWidget):
 
     def extract_wise_data_from_calculation_output(self, calculation_output):
         beamline = PropagationElements()
-
         beamline.add_beamline_element(WiseBeamlineElement(optical_element=calculation_output[0]))
 
         return WiseData(wise_wavefront=None, wise_beamline=beamline)

@@ -6,6 +6,7 @@ class WisePreInputData:
     def __init__(self,
                 figure_error_file=NONE,
                 figure_error_step=0.0,
+                figure_error_amplitude_scaling=1.0,
                 figure_user_units_to_m=1.0,
                 roughness_file=NONE,
                 roughness_x_scaling=1.0,
@@ -15,6 +16,7 @@ class WisePreInputData:
 
         self.figure_error_file = figure_error_file
         self.figure_error_step = figure_error_step
+        self.figure_error_amplitude_scaling = figure_error_amplitude_scaling
         self.figure_user_units_to_m = figure_user_units_to_m
 
         self.roughness_file = roughness_file
@@ -33,3 +35,18 @@ class WiseData(object):
         self.wise_beamline = wise_beamline
         self.wise_wavefront = wise_wavefront
 
+    def duplicate(self):
+
+        duplicated_wise_beamline = None
+
+        if not self.wise_beamline is None:
+            duplicated_wise_beamline = PropagationElements()
+            for beamline_element in self.wise_beamline.get_propagation_elements():
+                duplicated_wise_beamline.add_beamline_element(beamline_element)
+
+        duplicated_wise_wavefront = None
+        if not self.wise_wavefront is None:
+            duplicated_wise_wavefront = WiseWavefront(wise_computation_results=self.wise_wavefront.wise_computation_result)
+
+        return WiseData(wise_beamline=duplicated_wise_beamline,
+                        wise_wavefront=duplicated_wise_wavefront)

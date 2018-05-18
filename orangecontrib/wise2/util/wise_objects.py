@@ -32,3 +32,4 @@ class WiseData(object):
 
         self.wise_beamline = wise_beamline
         self.wise_wavefront = wise_wavefront
+

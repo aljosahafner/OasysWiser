@@ -15,6 +15,6 @@ DESCRIPTION = "Widgets for WISE 2"
 
 BACKGROUND = "#FE2E2E"
 
-ICON = "icons/wise_tools.png"
+ICON = "icons/tools.png"
 
-PRIORITY = 5003
+PRIORITY = 303

@@ -9,12 +9,12 @@ Widgets for association rules.
 
 # Category description for the widget registry
 
-NAME = "WISE 2 Light Sources"
+NAME = "WISE 2 - WOFRY"
 
 DESCRIPTION = "Widgets for WISE 2"
 
 BACKGROUND = "#FE2E2E"
 
-ICON = "icons/source.png"
+ICON = "icons/wavefront_propagation.png"
 
-PRIORITY = 301
+PRIORITY = 304

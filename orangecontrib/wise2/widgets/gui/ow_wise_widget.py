@@ -1,4 +1,4 @@
-import sys
+import sys, numpy
 
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import QRect
@@ -12,14 +12,45 @@ from oasys.widgets import gui as oasysgui
 from oasys.util.oasys_util import EmittingStream
 
 from orangecontrib.wise2.util.wise_util import WisePlot
-from orangecontrib.wise2.util.wise_objects import WiseOutput
+from orangecontrib.wise2.util.wise_objects import WiseData
+
+from wiselib2.Fundation import PositioningDirectives
+import wiselib2.Optics as Optics
+
+positioning_directives_what = [PositioningDirectives.What.Centre,
+                               PositioningDirectives.What.UpstreamFocus,
+                               PositioningDirectives.What.DownstreamFocus]
+
+positioning_directives_where = [PositioningDirectives.Where.Centre,
+                                PositioningDirectives.Where.UpstreamFocus,
+                                PositioningDirectives.Where.DownstreamFocus]
+
+positioning_directives_refer_to = [PositioningDirectives.ReferTo.AbsoluteReference,
+                                   PositioningDirectives.ReferTo.UpstreamElement,
+                                   PositioningDirectives.ReferTo.DownstreamElement,
+                                   PositioningDirectives.ReferTo.DoNotMove]
+
+positioning_directives_which_angle = [Optics.TypeOfAngle.GrazingNominal,
+                                      Optics.TypeOfAngle.InputNominal,
+                                      Optics.TypeOfAngle.OutputNominal,
+                                      Optics.TypeOfAngle.SelfFrameOfReference,
+                                      Optics.TypeOfAngle.NormalAbsolute,
+                                      Optics.TypeOfAngle.TangentAbsolute]
+
+
+class ElementType:
+    SOURCE = 0
+    PLANE_MIRROR = 1
+    ELLIPTIC_MIRROR = 2
+    SPHERIC_MIRROR = 3
+    DETECTOR = 4
 
 class WiseWidget(widget.OWWidget):
     author = "Luca Rebuffi"
     maintainer_email = "luca.rebuffi@elettra.eu"
 
-    outputs = [{"name": "wise_output",
-                "type": WiseOutput,
+    outputs = [{"name": "Wise Data",
+                "type": WiseData,
                 "doc": ""}]
 
     IMAGE_WIDTH = 760
@@ -37,6 +68,22 @@ class WiseWidget(widget.OWWidget):
     plot_data = None
 
     want_main_area = 1
+
+
+    ReferTo = Setting(0)
+    What = Setting(0)
+    Where = Setting(0)
+    Distance = Setting(0.0)
+    XCentre = Setting(0.0)
+    YCentre = Setting(0.0)
+    GrazingAngle = Setting(0.0)
+    Angle = Setting(0.0)
+    WhichAngle = Setting(0)
+
+    Distance_checked = Setting(0)
+    XYCentre_checked = Setting(0)
+    GrazingAngle_checked = Setting(0)
+    Angle_checked = Setting(0)
 
     def __init__(self):
         super().__init__()
@@ -95,12 +142,111 @@ class WiseWidget(widget.OWWidget):
         out_box.layout().addWidget(self.wise_output)
 
         self.wise_output.setFixedHeight(590)
-        self.wise_output.setFixedWidth(600)
+        self.wise_output.setFixedWidth(700)
 
         gui.rubber(self.mainArea)
 
     def build_gui(self):
         pass
+
+
+    def build_positioning_directive_box(self, container_box, width, element_type=ElementType.SOURCE):
+
+        box = oasysgui.widgetBox(container_box, "Positioning Directives", orientation="vertical", width=width)
+
+        box_combos  = oasysgui.widgetBox(box, "", orientation="vertical", width=width-20)
+
+        box_Distance = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
+        box_Distance_check = oasysgui.widgetBox(box_Distance, "", orientation="horizontal", width=20)
+        box_Distance_value = oasysgui.widgetBox(box_Distance, "", orientation="horizontal")
+
+
+        box_XYCentre = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
+        box_XYCentre_check = oasysgui.widgetBox(box_XYCentre, "", orientation="horizontal", width=20)
+        box_XYCentre_value = oasysgui.widgetBox(box_XYCentre, "", orientation="vertical")
+
+        box_GrazingAngle = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
+        box_GrazingAngle_check = oasysgui.widgetBox(box_GrazingAngle, "", orientation="horizontal", width=20)
+        box_GrazingAngle_value = oasysgui.widgetBox(box_GrazingAngle, "", orientation="horizontal")
+
+        box_Angle = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
+        box_Angle_check = oasysgui.widgetBox(box_Angle, "", orientation="horizontal", width=20)
+        box_Angle_value = oasysgui.widgetBox(box_Angle, "", orientation="horizontal")
+
+        def set_WhichAngle():
+            box_GrazingAngle.setVisible(getattr(self, "WhichAngle") == positioning_directives_which_angle[0])
+            box_Angle.setVisible(getattr(self, "WhichAngle") != positioning_directives_which_angle[0])
+
+        def set_Distance_checked():
+            box_Distance_value.setEnabled(getattr(self, "Distance_checked") == 1)
+
+        def set_XYCentre_checked():
+            box_XYCentre_value.setEnabled(getattr(self, "XYCentre_checked") == 1)
+
+        def set_GrazingAngle_checked():
+            box_GrazingAngle_value.setEnabled(getattr(self, "GrazingAngle_checked") == 1)
+
+        def set_Angle_checked():
+            box_Angle_value.setEnabled(getattr(self, "Angle_checked") == 1)
+
+
+        def set_positioning_directives():
+            set_WhichAngle()
+
+        gui.comboBox(box_combos, self, "What", label="What",
+                     items=positioning_directives_what, labelWidth=210,
+                     sendSelectedValue=True, orientation="horizontal", callback=set_positioning_directives)
+
+        gui.comboBox(box_combos, self, "Where", label="Where",
+                     items=positioning_directives_where, labelWidth=210,
+                     sendSelectedValue=True, orientation="horizontal", callback=set_positioning_directives)
+
+        gui.comboBox(box_combos, self, "ReferTo", label="Refer To",
+                     items=positioning_directives_refer_to, labelWidth=210,
+                     sendSelectedValue=True, orientation="horizontal", callback=set_positioning_directives)
+
+        gui.comboBox(box_combos, self, "WhichAngle", label="Type Of Angle",
+                     items=positioning_directives_which_angle, labelWidth=210,
+                     sendSelectedValue=True, orientation="horizontal", callback=set_WhichAngle)
+
+        gui.separator(box_combos)
+
+        gui.checkBox(box_Distance_check, self, "Distance_checked", "", callback=set_Distance_checked)
+        gui.checkBox(box_XYCentre_check, self, "XYCentre_checked", "", callback=set_XYCentre_checked)
+        gui.checkBox(box_GrazingAngle_check, self, "GrazingAngle_checked", "", callback=set_GrazingAngle_checked)
+        gui.checkBox(box_Angle_check, self, "Angle_checked", "", callback=set_Angle_checked)
+
+        set_Angle_checked()
+        set_Distance_checked()
+        set_GrazingAngle_checked()
+        set_XYCentre_checked()
+
+        self.le_Distance = oasysgui.lineEdit(box_Distance_value, self, "Distance", "Distance", labelWidth=260, valueType=float, orientation="horizontal")
+        self.le_XCentre = oasysgui.lineEdit(box_XYCentre_value, self, "XCentre", "X Centre", labelWidth=260, valueType=float, orientation="horizontal")
+        self.le_YCentre = oasysgui.lineEdit(box_XYCentre_value, self, "YCentre", "Y Centre", labelWidth=260, valueType=float, orientation="horizontal")
+        oasysgui.lineEdit(box_Angle_value, self, "Angle", "Angle [deg]", labelWidth=260, valueType=float, orientation="horizontal")
+        oasysgui.lineEdit(box_GrazingAngle_value, self, "GrazingAngle", "Grazing Angle [deg]", labelWidth=260, valueType=float, orientation="horizontal")
+
+        set_positioning_directives()
+
+    def get_PositionDirectives(self):
+        return PositioningDirectives(PlaceWhat=self.What,
+                                     PlaceWhere=self.Where,
+                                     ReferTo=self.ReferTo,
+                                     XYCentre=None if self.XYCentre_checked == 0 else [self.XCentre, self.YCentre],
+                                     Distance=None if self.Distance_checked == 0 else self.Distance,
+                                     WhichAngle=self.WhichAngle,
+                                     GrazingAngle=None if self.GrazingAngle_checked == 0 else numpy.deg2rad(self.GrazingAngle),
+                                     Angle = None if self.Angle_checked == 0 else numpy.deg2rad(0))
+
+
+    def after_change_workspace_units(self):
+        label = self.le_Distance.parent().layout().itemAt(0).widget()
+        label.setText(label.text() + " [" + self.workspace_units_label + "]")
+        label = self.le_XCentre.parent().layout().itemAt(0).widget()
+        label.setText(label.text() + " [" + self.workspace_units_label + "]")
+        label = self.le_YCentre.parent().layout().itemAt(0).widget()
+        label.setText(label.text() + " [" + self.workspace_units_label + "]")
 
     def initializeTabs(self):
         size = len(self.tab)
@@ -241,8 +387,8 @@ class WiseWidget(widget.OWWidget):
 
                 self.setStatusMessage("")
 
-                wise_output = self.extract_wise_output_from_calculation_output(calculation_output)
-                if not wise_output is None: self.send("wise_output", wise_output)
+                wise_data = self.extract_wise_data_from_calculation_output(calculation_output)
+                if not wise_data is None: self.send("Wise Data", wise_data)
 
         except Exception as exception:
             QtWidgets.QMessageBox.critical(self, "Error",
@@ -267,7 +413,7 @@ class WiseWidget(widget.OWWidget):
     def extract_plot_data_from_calculation_output(self, calculation_output):
         raise Exception("This method should be reimplementd in subclasses!")
 
-    def extract_wise_output_from_calculation_output(self, calculation_output):
+    def extract_wise_data_from_calculation_output(self, calculation_output):
         raise Exception("This method should be reimplementd in subclasses!")
 
 if __name__ == "__main__":

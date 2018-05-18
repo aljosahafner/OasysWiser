@@ -8,17 +8,17 @@ except AttributeError:
     from setuptools import find_packages, setup
 
 
-NAME = 'OASYS1-WISE'
-VERSION = '1.1.6'
-ISRELEASED = True
+NAME = 'OASYS1-WISE2'
+VERSION = '0.0.1'
+ISRELEASED = False
 
-DESCRIPTION = 'WISE in Python'
+DESCRIPTION = 'WISE 2 in Python'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.txt')
 LONG_DESCRIPTION = open(README_FILE).read()
 AUTHOR = 'Michele Manfredda, Lorenzo Raimondi, Luca Rebuffi'
 AUTHOR_EMAIL = 'luca.rebuffi@elettra.eu'
-URL = 'https://github.com/lucarebuffi/WISE'
-DOWNLOAD_URL = 'https://github.com/lucarebuffi/WISE'
+URL = 'https://github.com/oasys-elettra-kit/WISE2'
+DOWNLOAD_URL = 'https://github.com/oasys-elettra-kit/WISE2'
 LICENSE = 'GPLv3'
 
 KEYWORDS = (
@@ -43,26 +43,28 @@ SETUP_REQUIRES = (
 INSTALL_REQUIRES = (
     'setuptools',
     'oasys1>=1.0.18',
-    'wiselib>=1.0.5',
-    'wofrywise'
+    'wiselib2',
+    'wofrywise2'
 )
 
 PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
 
 PACKAGE_DATA = {
-    "orangecontrib.wise.widgets.wise":["icons/*.png", "icons/*.jpg"],
-    "orangecontrib.wise.widgets.tools":["icons/*.png", "icons/*.jpg"],
-    "orangecontrib.wise.widgets.wofry":["icons/*.png", "icons/*.jpg"],
+    "orangecontrib.wise2.widgets.light_sources":["icons/*.png", "icons/*.jpg"],
+    "orangecontrib.wise2.widgets.optical_elements":["icons/*.png", "icons/*.jpg"],
+    "orangecontrib.wise2.widgets.tools":["icons/*.png", "icons/*.jpg"],
+    "orangecontrib.wise2.widgets.wofry":["icons/*.png", "icons/*.jpg"],
 }
 
-NAMESPACE_PACAKGES = ["orangecontrib", "orangecontrib.wise", "orangecontrib.wise.widgets"]
+NAMESPACE_PACAKGES = ["orangecontrib", "orangecontrib.wise2", "orangecontrib.wise2.widgets"]
 
 ENTRY_POINTS = {
     'oasys.addons' : ("wise = orangecontrib.wise", ),
     'oasys.widgets' : (
-        "WISE = orangecontrib.wise.widgets.wise",
-        "WISE Tools = orangecontrib.wise.widgets.tools",
-        "WISE Wofry = orangecontrib.wise.widgets.wofry",
+        "WISE 2 Light Sources = orangecontrib.wise2.widgets.light_sources",
+        "WISE 2 Optical Elements = orangecontrib.wise2.widgets.optical_elements",
+        "WISE 2 Tools = orangecontrib.wise2.widgets.tools",
+        "WISE 2 Wofry = orangecontrib.wise2.widgets.wofry",
     ),
 }
 
@@ -99,4 +101,4 @@ if __name__ == '__main__':
               zip_safe = False,
               )
 
-    if is_beta: raise NotImplementedError("This version of WISE doesn't work with Oasys1 beta.\nPlease install OASYS1 final release: http://www.elettra.eu/oasys.html")
+    if is_beta: raise NotImplementedError("This version of WISE 2 doesn't work with Oasys1 beta.\nPlease install OASYS1 final release: http://www.elettra.eu/oasys.html")

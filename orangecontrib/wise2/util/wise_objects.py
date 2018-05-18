@@ -1,7 +1,3 @@
-import numpy
-from collections import OrderedDict
-
-import numpy
 
 class WisePreInputData:
 
@@ -24,3 +20,15 @@ class WisePreInputData:
         self.roughness_file = roughness_file
         self.roughness_x_scaling =roughness_x_scaling
         self.roughness_y_scaling = roughness_y_scaling
+
+
+from wofry.propagator.propagator import PropagationElements
+from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
+
+class WiseData(object):
+    
+    def __init__(self, wise_beamline=PropagationElements(), wise_wavefront=WiseWavefront()):
+        super().__init__()
+
+        self.wise_beamline = wise_beamline
+        self.wise_wavefront = wise_wavefront

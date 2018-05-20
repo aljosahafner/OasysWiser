@@ -9,7 +9,7 @@ from oasys.widgets import congruence
 from wiselib2 import Optics
 import wiselib2.FermiSource as Fermi
 
-from wofry.propagator.propagator import PropagationElements
+from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagationElements
 
 from wofrywise2.beamline.wise_beamline_element import WiseBeamlineElement
 from wofrywise2.beamline.light_sources.wise_gaussian_source import WiseGaussianSource
@@ -101,7 +101,7 @@ class OWGaussianSource1d(WiseWidget):
         return calculation_output[1]
 
     def extract_wise_data_from_calculation_output(self, calculation_output):
-        beamline = PropagationElements()
+        beamline = WisePropagationElements()
         beamline.add_beamline_element(WiseBeamlineElement(optical_element=calculation_output[0]))
 
         return WiseData(wise_wavefront=None, wise_beamline=beamline)

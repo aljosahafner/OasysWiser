@@ -24,12 +24,12 @@ class WisePreInputData:
         self.roughness_y_scaling = roughness_y_scaling
 
 
-from wofry.propagator.propagator import PropagationElements
+from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagationElements
 from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
 
 class WiseData(object):
     
-    def __init__(self, wise_beamline=PropagationElements(), wise_wavefront=WiseWavefront()):
+    def __init__(self, wise_beamline=WisePropagationElements(), wise_wavefront=WiseWavefront()):
         super().__init__()
 
         self.wise_beamline = wise_beamline
@@ -40,7 +40,7 @@ class WiseData(object):
         duplicated_wise_beamline = None
 
         if not self.wise_beamline is None:
-            duplicated_wise_beamline = PropagationElements()
+            duplicated_wise_beamline = WisePropagationElements()
             for beamline_element in self.wise_beamline.get_propagation_elements():
                 duplicated_wise_beamline.add_beamline_element(beamline_element)
 

@@ -10,10 +10,9 @@ from oasys.widgets import congruence
 from syned.widget.widget_decorator import WidgetDecorator
 from syned.beamline.optical_elements.mirrors.mirror import Mirror
 
-from wiselib2 import Optics
 
-from wofry.propagator.propagator import PropagationElements, PropagationManager, PropagationParameters
-from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator
+from wofry.propagator.propagator import PropagationManager, PropagationParameters
+from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WisePropagationElements
 from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
 from wofrywise2.beamline.wise_beamline_element import WiseBeamlineElement
 
@@ -318,20 +317,14 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         output_data = self.input_data.duplicate()
         input_wavefront = output_data.wise_wavefront
 
-        beamline_element = WiseBeamlineElement(optical_element=optical_element)
+        if output_data.wise_beamline is None: output_data.wise_beamline = WisePropagationElements()
 
-        if output_data.wise_beamline is None:
-            output_data.wise_beamline = PropagationElements()
-
-        beamline = output_data.wise_beamline
-        beamline.add_beamline_element(beamline_element)
-
-        single_propagation_beamline = PropagationElements()
-        single_propagation_beamline.add_beamline_element(beamline_element)
+        output_data.wise_beamline.add_beamline_element(WiseBeamlineElement(optical_element=optical_element))
 
         parameters = PropagationParameters(wavefront=input_wavefront if not input_wavefront is None else WiseWavefront(),
-                                           propagation_elements=single_propagation_beamline)
+                                           propagation_elements=output_data.wise_beamline)
 
+        parameters.set_additional_parameters("single_propagation", True)
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
 
         output_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=parameters, handler_name=WisePropagator.HANDLER_NAME)
@@ -352,12 +345,12 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         data_to_plot[1, :] = I
         data_to_plot[2, :] = numpy.imag(E)
 
-        if not wise_optical_element.LastFigureErrorUsed is None and len(wise_optical_element.LastFigureErrorUsed) > 0:
-            figure_error_x = numpy.linspace(0, self.length, len(wise_optical_element.LastFigureErrorUsed))
+        if not wise_optical_element.CoreOptics.LastFigureErrorUsed is None and len(wise_optical_element.CoreOptics.LastFigureErrorUsed) > 0:
+            figure_error_x = numpy.linspace(0, self.length, len(wise_optical_element.CoreOptics.LastFigureErrorUsed))
             data_to_plot_fe = numpy.zeros((2, len(figure_error_x)))
 
             data_to_plot_fe[0, :] = figure_error_x
-            data_to_plot_fe[1, :] = wise_optical_element.LastFigureErrorUseds*1e9 # nm
+            data_to_plot_fe[1, :] = wise_optical_element.CoreOptics.LastFigureErrorUseds*1e9 # nm
         else:
             data_to_plot_fe = numpy.zeros((2, 1))
 

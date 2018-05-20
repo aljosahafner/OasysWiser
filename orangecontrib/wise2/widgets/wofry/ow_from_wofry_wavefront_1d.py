@@ -10,7 +10,7 @@ from oasys.widgets import congruence
 from orangecontrib.wise2.util.wise_objects import WiseData
 from orangecontrib.wise2.widgets.gui.ow_wise_widget import WiseWidget
 
-from wofry.propagator.propagator import PropagationElements
+from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagationElements
 from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
 
 from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
@@ -86,7 +86,8 @@ class OWFromWofryWavefront1d(WiseWidget):
         return calculation_output[1]
 
     def extract_wise_data_from_calculation_output(self, calculation_output):
-        return WiseData(wise_wavefront=calculation_output[0], wise_beamline=PropagationElements())
+        #TODO: da rivedere
+        return WiseData(wise_wavefront=calculation_output[0], wise_beamline=WisePropagationElements())
 
     def set_input(self, input_data):
         self.setStatusMessage("")

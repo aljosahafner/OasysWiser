@@ -364,7 +364,7 @@ class WiseWidget(widget.OWWidget):
 
 
     def compute(self):
-        self.setStatusMessage("Running XOPPY")
+        self.setStatusMessage("Running WISEr")
 
         self.progressBarInit()
 

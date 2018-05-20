@@ -1,7 +1,6 @@
 import numpy
 from time import sleep
 
-from PyQt5.QtCore import QMutex, QThread, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMessageBox, QInputDialog
 from orangewidget import gui
 from orangewidget.settings import Setting
@@ -67,17 +66,11 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     input_data = None
 
-    compute_thread = None
-    stop_compute = False
-    compute_running = False    
-
     def set_input(self, input_data):
         self.setStatusMessage("")
 
         if not input_data is None:
             try:
-                if self.compute_running: raise RuntimeError("WISEr is Running: Input data are not accepted!")
-
                 if input_data.wise_beamline is None or input_data.wise_beamline.get_propagation_elements_number() == 0:
                     if input_data.wise_wavefront is None: raise ValueError("Input Data contains no wavefront and/or no source to perform wavefront propagation")
 
@@ -93,8 +86,6 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
     def set_pre_input(self, data):
         if data is not None:
             try:
-                if self.compute_running: raise RuntimeError("WISEr is Running: Input data are not accepted!")
-
                 if data.figure_error_file != WisePreInputData.NONE:
                     self.figure_error_file = data.figure_error_file
                     self.figure_error_step = data.figure_error_step
@@ -182,7 +173,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         gui.button(file_box, self, "...", callback=self.selectFigureErrorFile)
 
         self.le_figure_error_step = oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_step", "Step", labelWidth=240, valueType=float, orientation="horizontal")
-        oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_um_conversion", "user file u.m. to [m] factor", labelWidth=240, valueType=float, orientation="horizontal")
+        oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_amplitude_scaling", "Amplitude scaling factor", labelWidth=240, valueType=float, orientation="horizontal")
+        oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_um_conversion", "User file u.m. to [m] factor", labelWidth=240, valueType=float, orientation="horizontal")
 
         self.set_UseFigureError()
 
@@ -340,17 +332,12 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         parameters.set_additional_parameters("single_propagation", True)
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
 
-        self.output_wavefront = None
+        output_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=parameters, handler_name=WisePropagator.HANDLER_NAME)
 
-        self.compute_thread = ComputeThread(widget=self, parameters=parameters)
-        self.compute_thread.start()
+        output_data.wise_wavefront = output_wavefront
 
-        self.wait_for_data()
-
-        output_data.wise_wavefront = self.output_wavefront
-
-        S = self.output_wavefront.wise_computation_result.S
-        E = self.output_wavefront.wise_computation_result.Field
+        S = output_wavefront.wise_computation_result.S
+        E = output_wavefront.wise_computation_result.Field
         I = abs(E)**2
         norm = max(I)
         norm = 1.0 if norm == 0.0 else norm
@@ -468,8 +455,6 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
     def receive_syned_data(self, data):
         if not data is None:
             try:
-                if self.compute_running: raise RuntimeError("WISEr is Running: Input data are not accepted!")
-
                 beamline_element = data.get_beamline_element_at(-1)
 
                 if beamline_element is None:
@@ -511,51 +496,3 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     def receive_specific_syned_data(self, optical_element):
         raise NotImplementedError()
-
-
-##########################################
-# THREADING
-##########################################
-    def compute_begin(self):
-        self.progressBarInit()
-        self.setStatusMessage("WISEr calculation started")
-
-        self.button_box.setEnabled(False)
-        self.compute_running = True
-
-    def compute_completed(self):
-        self.setStatusMessage("WISEr calculation completed")
-
-        self.button_box.setEnabled(True)
-        self.compute_running = False
-        self.stop_compute = False
-
-        self.progressBarFinished()
-
-class ComputeThread(QThread):
-
-    begin = pyqtSignal()
-    mutex = QMutex()
-
-    def __init__(self, widget, parameters):
-        super(ComputeThread, self).__init__(widget)
-        self.widget = widget
-        self.parameters = parameters
-
-    def run(self):
-        try:
-            self.widget.compute_begin()
-
-            self.widget.output_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=self.parameters,
-                                                                                        handler_name=WisePropagator.HANDLER_NAME)
-        except Exception as e:
-            QMessageBox.critical(self.widget, "Error",
-                                 "WISEr computation Failed: " + str(e),
-                                 QMessageBox.Ok)
-
-        self.widget.compute_completed()
-
-
-class ComputeNotStartedException(Exception):
-    def __init__(self, *args, **kwargs): # real signature unknown
-        super(ComputeNotStartedException, self).__init__(args, kwargs)

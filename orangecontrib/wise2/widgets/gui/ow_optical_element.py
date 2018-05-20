@@ -1,6 +1,7 @@
-import sys
 import numpy
-from PyQt5.QtGui import QPalette, QColor, QFont
+from time import sleep
+
+from PyQt5.QtCore import QMutex, QThread, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMessageBox, QInputDialog
 from orangewidget import gui
 from orangewidget.settings import Setting
@@ -10,8 +11,8 @@ from oasys.widgets import congruence
 from syned.widget.widget_decorator import WidgetDecorator
 from syned.beamline.optical_elements.mirrors.mirror import Mirror
 
-
 from wofry.propagator.propagator import PropagationManager, PropagationParameters
+
 from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WisePropagationElements
 from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
 from wofrywise2.beamline.wise_beamline_element import WiseBeamlineElement
@@ -66,11 +67,17 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     input_data = None
 
+    compute_thread = None
+    stop_compute = False
+    compute_running = False    
+
     def set_input(self, input_data):
         self.setStatusMessage("")
 
         if not input_data is None:
             try:
+                if self.compute_running: raise RuntimeError("WISEr is Running: Input data are not accepted!")
+
                 if input_data.wise_beamline is None or input_data.wise_beamline.get_propagation_elements_number() == 0:
                     if input_data.wise_wavefront is None: raise ValueError("Input Data contains no wavefront and/or no source to perform wavefront propagation")
 
@@ -85,21 +92,28 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     def set_pre_input(self, data):
         if data is not None:
-            if data.figure_error_file != WisePreInputData.NONE:
-                self.figure_error_file = data.figure_error_file
-                self.figure_error_step = data.figure_error_step
-                self.figure_error_um_conversion = data.figure_user_units_to_m
-                self.use_figure_error = 1
+            try:
+                if self.compute_running: raise RuntimeError("WISEr is Running: Input data are not accepted!")
 
-                self.set_UseFigureError()
+                if data.figure_error_file != WisePreInputData.NONE:
+                    self.figure_error_file = data.figure_error_file
+                    self.figure_error_step = data.figure_error_step
+                    self.figure_error_um_conversion = data.figure_user_units_to_m
+                    self.use_figure_error = 1
 
-            if data.roughness_file != WisePreInputData.NONE:
-                self.roughness_file=data.roughness_file
-                self.roughness_x_scaling = data.roughness_x_scaling
-                self.roughness_y_scaling = data.roughness_y_scaling
-                self.use_roughness = 1
+                    self.set_UseFigureError()
 
-                self.set_UseRoughness()
+                if data.roughness_file != WisePreInputData.NONE:
+                    self.roughness_file=data.roughness_file
+                    self.roughness_x_scaling = data.roughness_x_scaling
+                    self.roughness_y_scaling = data.roughness_y_scaling
+                    self.use_roughness = 1
+
+                    self.set_UseRoughness()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e), QMessageBox.Ok)
+
+                self.setStatusMessage("Error")
 
     def build_gui(self):
 
@@ -137,7 +151,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         displacement_box = oasysgui.widgetBox(self.tab_dis, "Small Displacements", orientation="vertical", width=self.CONTROL_AREA_WIDTH-50)
 
         gui.comboBox(displacement_box, self, "use_small_displacements", label="Small Displacements",
-                     items=["Not", "Yes"], labelWidth=240,
+                     items=["No", "Yes"], labelWidth=240,
                      callback=self.set_UseSmallDisplacement, sendSelectedValue=False, orientation="horizontal")
 
         self.use_small_displacements_box       = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150)
@@ -147,6 +161,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         oasysgui.lineEdit(self.use_small_displacements_box, self, "rotation", "Rotation [deg]", labelWidth=240, valueType=float, orientation="horizontal")
         self.le_transverse = oasysgui.lineEdit(self.use_small_displacements_box, self, "transverse", "Transverse displacement", labelWidth=240, valueType=float, orientation="horizontal")
         self.le_longitudinal = oasysgui.lineEdit(self.use_small_displacements_box, self, "longitudinal", "Longitudinal displacement", labelWidth=240, valueType=float, orientation="horizontal")
+
+        self.set_UseSmallDisplacement()
 
         # ---------------------------------------------------------------------------
 
@@ -218,7 +234,6 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
         self.set_Multipool()
 
-
     def selectFigureErrorFile(self):
         self.le_figure_error_file.setText(oasysgui.selectFileFromDialog(self, self.figure_error_file, "Select File", file_extension_filter="Data Files (*.dat *.txt)"))
 
@@ -236,8 +251,6 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
     def set_UseSmallDisplacement(self):
         self.use_small_displacements_box.setVisible(self.use_small_displacements == 1)
         self.use_small_displacements_box_empty.setVisible(self.use_small_displacements == 0)
-
-
 
     def set_CalculationType(self):
         self.empty_box.setVisible(self.calculation_type==0)
@@ -327,12 +340,17 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         parameters.set_additional_parameters("single_propagation", True)
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
 
-        output_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=parameters, handler_name=WisePropagator.HANDLER_NAME)
+        self.output_wavefront = None
 
-        output_data.wise_wavefront = output_wavefront
+        self.compute_thread = ComputeThread(widget=self, parameters=parameters)
+        self.compute_thread.start()
 
-        S = output_wavefront.wise_computation_result.S
-        E = output_wavefront.wise_computation_result.Field
+        self.wait_for_data()
+
+        output_data.wise_wavefront = self.output_wavefront
+
+        S = self.output_wavefront.wise_computation_result.S
+        E = self.output_wavefront.wise_computation_result.Field
         I = abs(E)**2
         norm = max(I)
         norm = 1.0 if norm == 0.0 else norm
@@ -345,12 +363,12 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         data_to_plot[1, :] = I
         data_to_plot[2, :] = numpy.imag(E)
 
-        if not wise_optical_element.CoreOptics.LastFigureErrorUsed is None and len(wise_optical_element.CoreOptics.LastFigureErrorUsed) > 0:
-            figure_error_x = numpy.linspace(0, self.length, len(wise_optical_element.CoreOptics.LastFigureErrorUsed))
+        if not wise_optical_element.CoreOptics.FigureErrors is None and len(wise_optical_element.CoreOptics.FigureErrors) > 0:
+            figure_error_x = numpy.linspace(0, self.length, len(wise_optical_element.CoreOptics.FigureErrors[0]))
             data_to_plot_fe = numpy.zeros((2, len(figure_error_x)))
 
             data_to_plot_fe[0, :] = figure_error_x
-            data_to_plot_fe[1, :] = wise_optical_element.CoreOptics.LastFigureErrorUseds*1e9 # nm
+            data_to_plot_fe[1, :] = wise_optical_element.CoreOptics.FigureErrors[0]*1e9 # nm
         else:
             data_to_plot_fe = numpy.zeros((2, 1))
 
@@ -358,6 +376,9 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
             data_to_plot_fe[1, :] = numpy.zeros(1)
 
         return output_data, data_to_plot, data_to_plot_fe
+
+    def wait_for_data(self):
+        while self.output_wavefront is None: sleep(0.5)
 
     def get_inner_wise_optical_element(self):
         raise NotImplementedError()
@@ -446,39 +467,95 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     def receive_syned_data(self, data):
         if not data is None:
-            beamline_element = data.get_beamline_element_at(-1)
+            try:
+                if self.compute_running: raise RuntimeError("WISEr is Running: Input data are not accepted!")
 
-            if beamline_element is None:
-                raise Exception("Syned Data not correct: Empty Beamline Element")
+                beamline_element = data.get_beamline_element_at(-1)
 
-            optical_element = beamline_element._optical_element
+                if beamline_element is None:
+                    raise Exception("Syned Data not correct: Empty Beamline Element")
 
-            if optical_element is None:
-                raise Exception("Syned Data not correct: Empty Optical Element")
+                optical_element = beamline_element._optical_element
 
-            if not isinstance(optical_element, Mirror):
-                raise Exception("Syned Data not correct: Optical Element is not a Mirror")
+                if optical_element is None:
+                    raise Exception("Syned Data not correct: Empty Optical Element")
 
-            self.check_syned_shape(optical_element)
+                if not isinstance(optical_element, Mirror):
+                    raise Exception("Syned Data not correct: Optical Element is not a Mirror")
 
-            self.alpha = round(numpy.degrees(0.5*numpy.pi-beamline_element._coordinates._angle_radial), 4)
+                self.check_syned_shape(optical_element)
 
-            boundaries = optical_element._boundary_shape.get_boundaries()
+                self.alpha = round(numpy.degrees(0.5*numpy.pi-beamline_element._coordinates._angle_radial), 4)
 
-            tangential_size=round(abs(boundaries[3] - boundaries[2])/self.workspace_units_to_m, 6)
-            sagittal_size=round(abs(boundaries[1] - boundaries[0])/self.workspace_units_to_m, 6)
+                boundaries = optical_element._boundary_shape.get_boundaries()
 
-            axis = QInputDialog.getItem(self, "Projection Axis", "Select Direction", ("Horizontal", "Vertical"), 0, False)
+                tangential_size=round(abs(boundaries[3] - boundaries[2])/self.workspace_units_to_m, 6)
+                sagittal_size=round(abs(boundaries[1] - boundaries[0])/self.workspace_units_to_m, 6)
 
-            if axis == 0:
-                self.length = sagittal_size
-            else:
-                self.length = tangential_size
+                axis = QInputDialog.getItem(self, "Projection Axis", "Select Direction", ("Horizontal", "Vertical"), 0, False)
 
-            self.receive_specific_syned_data(optical_element)
+                if axis == 0:
+                    self.length = sagittal_size
+                else:
+                    self.length = tangential_size
+
+                self.receive_specific_syned_data(optical_element)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e), QMessageBox.Ok)
+
+                self.setStatusMessage("Error")
+
 
     def check_syned_shape(self, optical_element):
         raise NotImplementedError()
 
     def receive_specific_syned_data(self, optical_element):
         raise NotImplementedError()
+
+
+##########################################
+# THREADING
+##########################################
+    def compute_begin(self):
+        self.progressBarInit()
+        self.setStatusMessage("WISEr calculation started")
+
+        self.button_box.setEnabled(False)
+        self.compute_running = True
+
+    def compute_completed(self):
+        self.setStatusMessage("WISEr calculation completed")
+
+        self.button_box.setEnabled(True)
+        self.compute_running = False
+        self.stop_compute = False
+
+        self.progressBarFinished()
+
+class ComputeThread(QThread):
+
+    begin = pyqtSignal()
+    mutex = QMutex()
+
+    def __init__(self, widget, parameters):
+        super(ComputeThread, self).__init__(widget)
+        self.widget = widget
+        self.parameters = parameters
+
+    def run(self):
+        try:
+            self.widget.compute_begin()
+
+            self.widget.output_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=self.parameters,
+                                                                                        handler_name=WisePropagator.HANDLER_NAME)
+        except Exception as e:
+            QMessageBox.critical(self.widget, "Error",
+                                 "WISEr computation Failed: " + str(e),
+                                 QMessageBox.Ok)
+
+        self.widget.compute_completed()
+
+
+class ComputeNotStartedException(Exception):
+    def __init__(self, *args, **kwargs): # real signature unknown
+        super(ComputeNotStartedException, self).__init__(args, kwargs)

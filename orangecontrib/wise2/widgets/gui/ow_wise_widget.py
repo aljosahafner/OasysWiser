@@ -1,4 +1,4 @@
-import sys, numpy
+import sys
 
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import QRect

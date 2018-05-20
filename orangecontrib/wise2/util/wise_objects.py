@@ -36,7 +36,6 @@ class WiseData(object):
         self.wise_wavefront = wise_wavefront
 
     def duplicate(self):
-
         duplicated_wise_beamline = None
 
         if not self.wise_beamline is None:

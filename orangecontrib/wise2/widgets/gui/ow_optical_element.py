@@ -329,7 +329,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         parameters = PropagationParameters(wavefront=input_wavefront if not input_wavefront is None else WiseWavefront(),
                                            propagation_elements=output_data.wise_beamline)
 
-        parameters.set_additional_parameters("single_propagation", True)
+        parameters.set_additional_parameters("single_propagation", False)
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
 
         output_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=parameters, handler_name=WisePropagator.HANDLER_NAME)

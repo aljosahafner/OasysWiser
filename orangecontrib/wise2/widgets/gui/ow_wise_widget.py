@@ -69,9 +69,9 @@ class WiseWidget(widget.OWWidget):
     want_main_area = 1
 
 
-    ReferTo = Setting(0)
-    What = Setting(0)
-    Where = Setting(0)
+    ReferTo = Setting(PositioningDirectives.ReferTo.AbsoluteReference)
+    What = Setting(PositioningDirectives.What.Centre)
+    Where = Setting(PositioningDirectives.Where.Centre)
     Distance = Setting(0.0)
     XCentre = Setting(0.0)
     YCentre = Setting(0.0)
@@ -164,17 +164,19 @@ class WiseWidget(widget.OWWidget):
         box_XYCentre_check = oasysgui.widgetBox(box_XYCentre, "", orientation="horizontal", width=20)
         box_XYCentre_value = oasysgui.widgetBox(box_XYCentre, "", orientation="vertical")
 
-        #box_GrazingAngle = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
-        #box_GrazingAngle_check = oasysgui.widgetBox(box_GrazingAngle, "", orientation="horizontal", width=20)
-        #box_GrazingAngle_value = oasysgui.widgetBox(box_GrazingAngle, "", orientation="horizontal")
+        '''
+        box_GrazingAngle = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
+        box_GrazingAngle_check = oasysgui.widgetBox(box_GrazingAngle, "", orientation="horizontal", width=20)
+        box_GrazingAngle_value = oasysgui.widgetBox(box_GrazingAngle, "", orientation="horizontal")
 
-        #box_Angle = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
-        #box_Angle_check = oasysgui.widgetBox(box_Angle, "", orientation="horizontal", width=20)
-        #box_Angle_value = oasysgui.widgetBox(box_Angle, "", orientation="horizontal")
+        box_Angle = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
+        box_Angle_check = oasysgui.widgetBox(box_Angle, "", orientation="horizontal", width=20)
+        box_Angle_value = oasysgui.widgetBox(box_Angle, "", orientation="horizontal")
 
-        #def set_WhichAngle():
-        #    box_GrazingAngle.setVisible(getattr(self, "WhichAngle") == positioning_directives_which_angle[0])
-        #    box_Angle.setVisible(getattr(self, "WhichAngle") != positioning_directives_which_angle[0])
+        def set_WhichAngle():
+            box_GrazingAngle.setVisible(getattr(self, "WhichAngle") == positioning_directives_which_angle[0])
+            box_Angle.setVisible(getattr(self, "WhichAngle") != positioning_directives_which_angle[0])
+        '''
 
         def set_Distance_checked():
             box_Distance_value.setEnabled(getattr(self, "Distance_checked") == 1)
@@ -182,12 +184,13 @@ class WiseWidget(widget.OWWidget):
         def set_XYCentre_checked():
             box_XYCentre_value.setEnabled(getattr(self, "XYCentre_checked") == 1)
 
-        #def set_GrazingAngle_checked():
-        #    box_GrazingAngle_value.setEnabled(getattr(self, "GrazingAngle_checked") == 1)
+        '''
+        def set_GrazingAngle_checked():
+            box_GrazingAngle_value.setEnabled(getattr(self, "GrazingAngle_checked") == 1)
 
-        #def set_Angle_checked():
-        #    box_Angle_value.setEnabled(getattr(self, "Angle_checked") == 1)
-
+        def set_Angle_checked():
+            box_Angle_value.setEnabled(getattr(self, "Angle_checked") == 1)
+        '''
 
         def set_positioning_directives():
             pass
@@ -205,28 +208,36 @@ class WiseWidget(widget.OWWidget):
                      items=positioning_directives_refer_to, labelWidth=box_combos.width()-150,
                      sendSelectedValue=True, orientation="horizontal", callback=set_positioning_directives)
 
-        #gui.comboBox(box_combos, self, "WhichAngle", label="Type Of Angle",
-        #             items=positioning_directives_which_angle, labelWidth=box_combos.width()-150,
-        #             sendSelectedValue=True, orientation="horizontal", callback=set_WhichAngle)
+        '''
+        gui.comboBox(box_combos, self, "WhichAngle", label="Type Of Angle",
+                     items=positioning_directives_which_angle, labelWidth=box_combos.width()-150,
+                     sendSelectedValue=True, orientation="horizontal", callback=set_WhichAngle)
+        '''
 
         gui.separator(box_combos)
 
         gui.checkBox(box_Distance_check, self, "Distance_checked", "", callback=set_Distance_checked)
         gui.checkBox(box_XYCentre_check, self, "XYCentre_checked", "", callback=set_XYCentre_checked)
-        #gui.checkBox(box_GrazingAngle_check, self, "GrazingAngle_checked", "", callback=set_GrazingAngle_checked)
-        #gui.checkBox(box_Angle_check, self, "Angle_checked", "", callback=set_Angle_checked)
+        '''
+        gui.checkBox(box_GrazingAngle_check, self, "GrazingAngle_checked", "", callback=set_GrazingAngle_checked)
+        gui.checkBox(box_Angle_check, self, "Angle_checked", "", callback=set_Angle_checked)
+        '''
 
-        #set_Angle_checked()
         set_Distance_checked()
-        #set_GrazingAngle_checked()
         set_XYCentre_checked()
+        '''
+        set_Angle_checked()
+        set_GrazingAngle_checked()
+        '''
 
         self.le_Distance = oasysgui.lineEdit(box_Distance_value, self, "Distance", "Distance", labelWidth=200, valueType=float, orientation="horizontal")
         self.le_XCentre = oasysgui.lineEdit(box_XYCentre_value, self, "XCentre", "X Centre", labelWidth=200, valueType=float, orientation="horizontal")
         self.le_YCentre = oasysgui.lineEdit(box_XYCentre_value, self, "YCentre", "Y Centre", labelWidth=200, valueType=float, orientation="horizontal")
-        #oasysgui.lineEdit(box_Angle_value, self, "Angle", "Angle [deg]", labelWidth=200, valueType=float, orientation="horizontal")
-        #oasysgui.lineEdit(box_GrazingAngle_value, self, "GrazingAngle", "Grazing Angle [deg]", labelWidth=200, valueType=float, orientation="horizontal")
 
+        '''
+        oasysgui.lineEdit(box_Angle_value, self, "Angle", "Angle [deg]", labelWidth=200, valueType=float, orientation="horizontal")
+        oasysgui.lineEdit(box_GrazingAngle_value, self, "GrazingAngle", "Grazing Angle [deg]", labelWidth=200, valueType=float, orientation="horizontal")
+        '''
         set_positioning_directives()
 
     def get_PositionDirectives(self):
@@ -330,13 +341,12 @@ class WiseWidget(widget.OWWidget):
                                         ytitle=ytitles[index],
                                         log_x=log_x,
                                         log_y=log_y)
-
-                        self.tabs.setCurrentIndex(index)
                     except Exception as e:
                         self.view_type_combo.setEnabled(True)
 
                         raise Exception("Data not plottable: bad content\n" + str(e))
 
+                self.tabs.setCurrentIndex(0)
                 self.view_type_combo.setEnabled(True)
             else:
                 raise Exception("Empty Data")

@@ -21,8 +21,8 @@ class OWEllipticMirror(OWOpticalElement, WidgetDecorator):
     icon = "icons/ellipsoid_mirror.png"
     priority = 2
 
-    f1 = Setting(98000)
-    f2 = Setting(1200)
+    f1 = Setting(98.0)
+    f2 = Setting(1.2)
 
     def after_change_workspace_units(self):
         label = self.le_f1.parent().layout().itemAt(0).widget()

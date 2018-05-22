@@ -27,7 +27,7 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
 
     def get_inner_wise_optical_element(self):
         return Optics.Detector(L=self.length*self.workspace_units_to_m,
-                                  AngleGrazing = numpy.deg2rad(self.alpha))
+                               AngleGrazing = numpy.deg2rad(self.alpha))
 
     def get_optical_element(self, inner_wise_optical_element):
          return WiseDetector(name= self.oe_name,
@@ -41,3 +41,22 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
     def check_syned_shape(self, optical_element):
         pass
 
+
+
+    def getTabTitles(self):
+        return ["Field Intensity (O.E.)", "Phase (O.E.)"]
+
+    def getTitles(self):
+        return ["Field Intensity (O.E.)", "Phase (O.E.)"]
+
+    def getXTitles(self):
+        return ["S [" + self.workspace_units_label + "]", "S [" + self.workspace_units_label + "]"]
+
+    def getYTitles(self):
+        return ["|E0|**2", "Phase"]
+
+    def getVariablesToPlot(self):
+        return [(0, 1), (0, 2)]
+
+    def getLogPlot(self):
+        return [(False, False), (False, False)]

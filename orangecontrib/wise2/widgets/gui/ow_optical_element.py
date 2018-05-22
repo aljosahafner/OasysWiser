@@ -66,6 +66,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     input_data = None
 
+    has_figure_error_box=True
+
     def set_input(self, input_data):
         self.setStatusMessage("")
 
@@ -145,8 +147,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
                      items=["No", "Yes"], labelWidth=240,
                      callback=self.set_UseSmallDisplacement, sendSelectedValue=False, orientation="horizontal")
 
-        self.use_small_displacements_box       = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150)
-        self.use_small_displacements_box_empty = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150)
+        self.use_small_displacements_box       = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150, width=self.CONTROL_AREA_WIDTH-60)
+        self.use_small_displacements_box_empty = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150, width=self.CONTROL_AREA_WIDTH-60)
 
         
         oasysgui.lineEdit(self.use_small_displacements_box, self, "rotation", "Rotation [deg]", labelWidth=240, valueType=float, orientation="horizontal")
@@ -156,46 +158,52 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         self.set_UseSmallDisplacement()
 
         # ---------------------------------------------------------------------------
-
-        figure_error_box = oasysgui.widgetBox(self.tab_err, "Figure Error Parameters", orientation="vertical", width=self.CONTROL_AREA_WIDTH-50)
-
-
-        gui.comboBox(figure_error_box, self, "use_figure_error", label="Error Profile",
-                     items=["None", "User Defined"], labelWidth=240,
-                     callback=self.set_UseFigureError, sendSelectedValue=False, orientation="horizontal")
-
-        self.use_figure_error_box = oasysgui.widgetBox(figure_error_box, "", addSpace=True, orientation="vertical", height=80)
-        self.use_figure_error_box_empty = oasysgui.widgetBox(figure_error_box, "", addSpace=True, orientation="vertical", height=80)
+        if self.has_figure_error_box:
 
 
-        file_box =  oasysgui.widgetBox(self.use_figure_error_box, "", addSpace=False, orientation="horizontal")
-        self.le_figure_error_file = oasysgui.lineEdit(file_box, self, "figure_error_file", "File Name", labelWidth=100, valueType=str, orientation="horizontal")
-        gui.button(file_box, self, "...", callback=self.selectFigureErrorFile)
+            figure_error_tab = oasysgui.tabWidget(self.tab_err)
+            error_tab = oasysgui.createTabPage(figure_error_tab, "Error Profile")
+            roughness_tab = oasysgui.createTabPage(figure_error_tab, "Roughness")
 
-        self.le_figure_error_step = oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_step", "Step", labelWidth=240, valueType=float, orientation="horizontal")
-        oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_amplitude_scaling", "Amplitude scaling factor", labelWidth=240, valueType=float, orientation="horizontal")
-        oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_um_conversion", "User file u.m. to [m] factor", labelWidth=240, valueType=float, orientation="horizontal")
+            figure_error_box = oasysgui.widgetBox(error_tab, "", orientation="vertical", width=self.CONTROL_AREA_WIDTH-65)
+            roughness_box = oasysgui.widgetBox(roughness_tab, "", orientation="vertical", width=self.CONTROL_AREA_WIDTH-65)
 
-        self.set_UseFigureError()
+            gui.comboBox(figure_error_box, self, "use_figure_error", label="Error Profile",
+                         items=["None", "User Defined"], labelWidth=240,
+                         callback=self.set_UseFigureError, sendSelectedValue=False, orientation="horizontal")
 
-        gui.comboBox(figure_error_box, self, "use_roughness", label="Roughness",
-                     items=["None", "User Defined"], labelWidth=240,
-                     callback=self.set_UseRoughness, sendSelectedValue=False, orientation="horizontal")
+            self.use_figure_error_box = oasysgui.widgetBox(figure_error_box, "", addSpace=True, orientation="vertical", height=150)
+            self.use_figure_error_box_empty = oasysgui.widgetBox(figure_error_box, "", addSpace=True, orientation="vertical", height=150)
 
-        self.use_roughness_box = oasysgui.widgetBox(figure_error_box, "", addSpace=True, orientation="vertical", height=110)
-        self.use_roughness_box_empty = oasysgui.widgetBox(figure_error_box, "", addSpace=True, orientation="vertical", height=110)
 
-        file_box = oasysgui.widgetBox(self.use_roughness_box, "", addSpace=False, orientation="horizontal")
-        self.le_roughness_file = oasysgui.lineEdit(file_box, self, "roughness_file", "File Name", labelWidth=100, valueType=str, orientation="horizontal")
-        gui.button(file_box, self, "...", callback=self.selectRoughnessFile)
+            file_box =  oasysgui.widgetBox(self.use_figure_error_box, "", addSpace=False, orientation="horizontal")
+            self.le_figure_error_file = oasysgui.lineEdit(file_box, self, "figure_error_file", "File Name", labelWidth=100, valueType=str, orientation="horizontal")
+            gui.button(file_box, self, "...", callback=self.selectFigureErrorFile)
 
-        oasysgui.lineEdit(self.use_roughness_box, self, "roughness_x_scaling", "x user file u.m. to [m]   factor", labelWidth=240, valueType=float, orientation="horizontal")
-        oasysgui.lineEdit(self.use_roughness_box, self, "roughness_y_scaling", "y user file u.m. to [m^3] factor", labelWidth=240, valueType=float, orientation="horizontal")
+            self.le_figure_error_step = oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_step", "Step", labelWidth=240, valueType=float, orientation="horizontal")
+            oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_amplitude_scaling", "Amplitude scaling factor", labelWidth=240, valueType=float, orientation="horizontal")
+            oasysgui.lineEdit(self.use_figure_error_box, self, "figure_error_um_conversion", "User file u.m. to [m] factor", labelWidth=240, valueType=float, orientation="horizontal")
 
-        gui.comboBox(self.use_roughness_box, self, "roughness_fit_data", label="Fit numeric data with power law",
-                     items=["No", "Yes"], labelWidth=240, sendSelectedValue=False, orientation="horizontal")
+            self.set_UseFigureError()
 
-        self.set_UseRoughness()
+            gui.comboBox(roughness_box, self, "use_roughness", label="Roughness",
+                         items=["None", "User Defined"], labelWidth=240,
+                         callback=self.set_UseRoughness, sendSelectedValue=False, orientation="horizontal")
+
+            self.use_roughness_box = oasysgui.widgetBox(roughness_box, "", addSpace=True, orientation="vertical", height=150)
+            self.use_roughness_box_empty = oasysgui.widgetBox(roughness_box, "", addSpace=True, orientation="vertical", height=150)
+
+            file_box = oasysgui.widgetBox(self.use_roughness_box, "", addSpace=False, orientation="horizontal")
+            self.le_roughness_file = oasysgui.lineEdit(file_box, self, "roughness_file", "File Name", labelWidth=100, valueType=str, orientation="horizontal")
+            gui.button(file_box, self, "...", callback=self.selectRoughnessFile)
+
+            oasysgui.lineEdit(self.use_roughness_box, self, "roughness_x_scaling", "x user file u.m. to [m]   factor", labelWidth=240, valueType=float, orientation="horizontal")
+            oasysgui.lineEdit(self.use_roughness_box, self, "roughness_y_scaling", "y user file u.m. to [m^3] factor", labelWidth=240, valueType=float, orientation="horizontal")
+
+            gui.comboBox(self.use_roughness_box, self, "roughness_fit_data", label="Fit numeric data with power law",
+                         items=["No", "Yes"], labelWidth=240, sendSelectedValue=False, orientation="horizontal")
+
+            self.set_UseRoughness()
 
         # ---------------------------------------------------------------------------
 
@@ -299,13 +307,16 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
             wise_optical_element.CoreOptics.SmallDisplacements.Long = self.longitudinal*self.workspace_units_to_m # Longitudinal displacement (idem)
         else:
             wise_optical_element.CoreOptics.ComputationSettings.UseSmallDisplacements = False
+            wise_optical_element.CoreOptics.SmallDisplacements.Rotation = 0.0
+            wise_optical_element.CoreOptics.SmallDisplacements.Trans = 0.0
+            wise_optical_element.CoreOptics.SmallDisplacements.Long = 0.0
 
         if self.use_figure_error == 1:
             wise_optical_element.CoreOptics.ComputationSettings.UseFigureError = True
 
-            wise_optical_element.CoreOptics.FigureErrorLoad(h = numpy.loadtxt(self.figure_error_file) * self.figure_error_um_conversion,
+            wise_optical_element.CoreOptics.FigureErrorLoad(File = self.figure_error_file,
                                                             Step = self.figure_error_step * self.workspace_units_to_m, # passo del file
-                                                            AmplitudeScaling = self.figure_error_amplitude_scaling # fattore di scala
+                                                            AmplitudeScaling = self.figure_error_amplitude_scaling * self.figure_error_um_conversion # fattore di scala
                                                            )
         else:
             wise_optical_element.CoreOptics.ComputationSettings.UseFigureError = False
@@ -322,7 +333,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
             wise_optical_element.ComputationSettings.UseCustomSampling = True
             wise_optical_element.ComputationSettings.NSamples = self.number_of_points
 
-        output_data = self.input_data#.duplicate()
+        output_data = self.input_data.duplicate()
         input_wavefront = output_data.wise_wavefront
 
         if output_data.wise_beamline is None: output_data.wise_beamline = WisePropagationElements()
@@ -346,10 +357,10 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         raise NotImplementedError()
 
     def getTabTitles(self):
-        return ["Field Intensity (mirror)", "Phase (mirror)", "Figure Error"]
+        return ["Field Intensity (O.E.)", "Phase (O.E.)", "Figure Error"]
 
     def getTitles(self):
-        return ["Field Intensity (mirror)", "Phase (mirror)", "Figure Error"]
+        return ["Field Intensity (O.E.)", "Phase (O.E.)", "Figure Error"]
 
     def getXTitles(self):
         return ["S [" + self.workspace_units_label + "]", "S [" + self.workspace_units_label + "]", "S [" + self.workspace_units_label + "]"]
@@ -381,7 +392,10 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         data_to_plot[1, :] = I
         data_to_plot[2, :] = numpy.imag(E)
 
+        self.is_tab_2_enabled = False
+
         if not wise_optical_element.CoreOptics.FigureErrors is None and len(wise_optical_element.CoreOptics.FigureErrors) > 0:
+            self.is_tab_2_enabled = True
             figure_error_x = numpy.linspace(0, self.length, len(wise_optical_element.CoreOptics.FigureErrors[0]))
             data_to_plot_fe = numpy.zeros((2, len(figure_error_x)))
 
@@ -438,12 +452,20 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
                                             log_x=log_x,
                                             log_y=log_y)
 
-                        self.tabs.setCurrentIndex(index)
+                            if index == 2:
+                                if self.is_tab_2_enabled:
+                                    self.tab[2].setEnabled(True)
+                                    self.plot_canvas[2]._backend.fig.set_facecolor("#FEFEFE")
+                                else:
+                                    self.tab[2].setEnabled(False)
+                                    self.plot_canvas[2]._backend.fig.set_facecolor("#D7DBDD")
+
                     except Exception as e:
                         self.view_type_combo.setEnabled(True)
 
                         raise Exception("Data not plottable: bad content\n" + str(e))
 
+                self.tabs.setCurrentIndex(0)
                 self.view_type_combo.setEnabled(True)
             else:
                 raise Exception("Empty Data")

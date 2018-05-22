@@ -278,7 +278,10 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
             congruence.checkFileName(self.roughness_file)
 
         if self.calculation_type == 1:
-            congruence.checkStrictlyPositiveNumber(self.number_of_points)
+            congruence.checkStrictlyPositiveNumber(self.number_of_points, "Number of Points")
+
+        if self.use_multipool == 1:
+            congruence.checkStrictlyPositiveNumber(self.n_pools, "Nr. Parallel Processes")
 
 
     def do_wise_calculation(self):

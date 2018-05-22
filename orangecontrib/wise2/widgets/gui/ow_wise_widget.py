@@ -417,7 +417,7 @@ class WiseWidget(widget.OWWidget):
         raise Exception("This method should be reimplementd in subclasses!")
 
     def extract_wise_data_from_calculation_output(self, calculation_output):
-        raise Exception("This method should be reimplementd in subclasses!")
+        return calculation_output
 
 if __name__ == "__main__":
     a = QApplication(sys.argv)

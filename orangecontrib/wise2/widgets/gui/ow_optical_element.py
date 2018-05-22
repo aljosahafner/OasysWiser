@@ -277,6 +277,9 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         if self.use_roughness == 1:
             congruence.checkFileName(self.roughness_file)
 
+        if self.calculation_type == 1:
+            congruence.checkStrictlyPositiveNumber(self.number_of_points)
+
 
     def do_wise_calculation(self):
         if self.input_data is None:
@@ -305,8 +308,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
             wise_optical_element.CoreOptics.ComputationSettings.UseFigureError = False
 
         if self.use_roughness == 1:
-            raise NotImplementedError("Not yet supported")
-            
+            raise NotImplementedError("Roughness Not yet supported")
         else:
             wise_optical_element.CoreOptics.ComputationSettings.UseRoughness = False
 
@@ -317,7 +319,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
             wise_optical_element.ComputationSettings.UseCustomSampling = True
             wise_optical_element.ComputationSettings.NSamples = self.number_of_points
 
-        output_data = self.input_data.duplicate()
+        output_data = self.input_data#.duplicate()
         input_wavefront = output_data.wise_wavefront
 
         if output_data.wise_beamline is None: output_data.wise_beamline = WisePropagationElements()
@@ -330,9 +332,37 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         parameters.set_additional_parameters("single_propagation", True)
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
 
-        output_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=parameters, handler_name=WisePropagator.HANDLER_NAME)
+        output_data.wise_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=parameters, handler_name=WisePropagator.HANDLER_NAME)
 
-        output_data.wise_wavefront = output_wavefront
+        return output_data
+
+    def get_inner_wise_optical_element(self):
+        raise NotImplementedError()
+
+    def get_optical_element(self, inner_wise_optical_element):
+        raise NotImplementedError()
+
+    def getTabTitles(self):
+        return ["Field Intensity (mirror)", "Phase (mirror)", "Figure Error"]
+
+    def getTitles(self):
+        return ["Field Intensity (mirror)", "Phase (mirror)", "Figure Error"]
+
+    def getXTitles(self):
+        return ["S [" + self.workspace_units_label + "]", "S [" + self.workspace_units_label + "]", "S [" + self.workspace_units_label + "]"]
+
+    def getYTitles(self):
+        return ["|E0|**2", "Phase", "Height Error [nm]"]
+
+    def getVariablesToPlot(self):
+        return [(0, 1), (0, 2), (0, 1)]
+
+    def getLogPlot(self):
+        return [(False, False), (False, False), (False, False)]
+
+    def extract_plot_data_from_calculation_output(self, calculation_output):
+        output_wavefront = calculation_output.wise_wavefront
+        wise_optical_element = calculation_output.wise_beamline.get_wise_propagation_element(-1)
 
         S = output_wavefront.wise_computation_result.S
         E = output_wavefront.wise_computation_result.Field
@@ -360,38 +390,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
             data_to_plot_fe[0, :] = numpy.zeros(1)
             data_to_plot_fe[1, :] = numpy.zeros(1)
 
-        return output_data, data_to_plot, data_to_plot_fe
-
-    def wait_for_data(self):
-        while self.output_wavefront is None: sleep(0.5)
-
-    def get_inner_wise_optical_element(self):
-        raise NotImplementedError()
-
-    def get_optical_element(self, inner_wise_optical_element):
-        raise NotImplementedError()
-
-    def getTabTitles(self):
-        return ["Field Intensity (mirror)", "Phase (mirror)", "Figure Error"]
-
-    def getTitles(self):
-        return ["Field Intensity (mirror)", "Phase (mirror)", "Figure Error"]
-
-    def getXTitles(self):
-        return ["S [" + self.workspace_units_label + "]", "S [" + self.workspace_units_label + "]", "S [" + self.workspace_units_label + "]"]
-
-    def getYTitles(self):
-        return ["|E0|**2", "Phase", "Height Error [nm]"]
-
-    def getVariablesToPlot(self):
-        return [(0, 1), (0, 2), (0, 1)]
-
-    def getLogPlot(self):
-        return [(False, False), (False, False), (False, False)]
-
-    def extract_plot_data_from_calculation_output(self, calculation_output):
-        return calculation_output[1], calculation_output[2]
-
+        return data_to_plot, data_to_plot_fe
 
     def plot_results(self, plot_data, progressBarValue=80):
         if not self.view_type == 0:
@@ -445,10 +444,6 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
                 self.view_type_combo.setEnabled(True)
             else:
                 raise Exception("Empty Data")
-
-
-    def extract_wise_data_from_calculation_output(self, calculation_output):
-        return calculation_output[0]
 
     def receive_syned_data(self, data):
         if not data is None:

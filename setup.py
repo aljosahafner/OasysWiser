@@ -66,6 +66,7 @@ ENTRY_POINTS = {
         "WISEr Tools = orangecontrib.wise2.widgets.tools",
         "WISEr Wofry = orangecontrib.wise2.widgets.wofry",
     ),
+    'oasys.menus' : ("wisemenu = orangecontrib.wise2.menu",)
 }
 
 if __name__ == '__main__':

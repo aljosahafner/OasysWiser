@@ -16,6 +16,12 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
     icon = "icons/screen.png"
     priority = 10
 
+    def __init__(self):
+        super().__init__()
+
+        self.has_figure_error_box = False
+        self.is_full_propagator = True
+
     def after_change_workspace_units(self):
         super(OWDetector, self).after_change_workspace_units()
 

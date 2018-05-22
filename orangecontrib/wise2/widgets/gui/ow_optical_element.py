@@ -10,7 +10,7 @@ from oasys.widgets import congruence
 from syned.widget.widget_decorator import WidgetDecorator
 from syned.beamline.optical_elements.mirrors.mirror import Mirror
 
-from wofry.propagator.propagator import PropagationManager, PropagationParameters
+from wofry.propagator.propagator import PropagationManager, PropagationParameters, InteractiveMode
 
 from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WisePropagationElements
 from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
@@ -66,7 +66,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     input_data = None
 
-    has_figure_error_box=True
+    has_figure_error_box = True
+    is_full_propagator   = False
 
     def set_input(self, input_data):
         self.setStatusMessage("")
@@ -147,10 +148,9 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
                      items=["No", "Yes"], labelWidth=240,
                      callback=self.set_UseSmallDisplacement, sendSelectedValue=False, orientation="horizontal")
 
-        self.use_small_displacements_box       = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150, width=self.CONTROL_AREA_WIDTH-60)
-        self.use_small_displacements_box_empty = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150, width=self.CONTROL_AREA_WIDTH-60)
+        self.use_small_displacements_box       = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150, width=self.CONTROL_AREA_WIDTH-65)
+        self.use_small_displacements_box_empty = oasysgui.widgetBox(displacement_box, "", addSpace=True, orientation="vertical", height=150, width=self.CONTROL_AREA_WIDTH-65)
 
-        
         oasysgui.lineEdit(self.use_small_displacements_box, self, "rotation", "Rotation [deg]", labelWidth=240, valueType=float, orientation="horizontal")
         self.le_transverse = oasysgui.lineEdit(self.use_small_displacements_box, self, "transverse", "Transverse displacement", labelWidth=240, valueType=float, orientation="horizontal")
         self.le_longitudinal = oasysgui.lineEdit(self.use_small_displacements_box, self, "longitudinal", "Longitudinal displacement", labelWidth=240, valueType=float, orientation="horizontal")
@@ -159,8 +159,6 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
         # ---------------------------------------------------------------------------
         if self.has_figure_error_box:
-
-
             figure_error_tab = oasysgui.tabWidget(self.tab_err)
             error_tab = oasysgui.createTabPage(figure_error_tab, "Error Profile")
             roughness_tab = oasysgui.createTabPage(figure_error_tab, "Roughness")
@@ -343,8 +341,9 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         parameters = PropagationParameters(wavefront=input_wavefront if not input_wavefront is None else WiseWavefront(wise_computation_results=None),
                                            propagation_elements=output_data.wise_beamline)
 
-        parameters.set_additional_parameters("single_propagation", True)
+        parameters.set_additional_parameters("single_propagation", True if PropagationManager.Instance().get_interactive_mode() == InteractiveMode.ENABLED else (not self.is_full_propagator))
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
+        parameters.set_additional_parameters("is_full_propagator", self.is_full_propagator)
 
         output_data.wise_wavefront = PropagationManager.Instance().do_propagation(propagation_parameters=parameters, handler_name=WisePropagator.HANDLER_NAME)
 
@@ -376,38 +375,42 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     def extract_plot_data_from_calculation_output(self, calculation_output):
         output_wavefront = calculation_output.wise_wavefront
-        wise_optical_element = calculation_output.wise_beamline.get_wise_propagation_element(-1)
 
-        S = output_wavefront.wise_computation_result.S
-        E = output_wavefront.wise_computation_result.Field
-        I = abs(E)**2
-        norm = max(I)
-        norm = 1.0 if norm == 0.0 else norm
-        I = I/norm
+        if not output_wavefront is None and not output_wavefront.wise_computation_result is None:
+            wise_optical_element = calculation_output.wise_beamline.get_wise_propagation_element(-1)
 
-        #------------------------------------------------------------
+            S = output_wavefront.wise_computation_result.S
+            E = output_wavefront.wise_computation_result.Field
+            I = abs(E)**2
+            norm = max(I)
+            norm = 1.0 if norm == 0.0 else norm
+            I = I/norm
 
-        data_to_plot = numpy.zeros((3, len(S)))
-        data_to_plot[0, :] = S / self.workspace_units_to_m
-        data_to_plot[1, :] = I
-        data_to_plot[2, :] = numpy.imag(E)
+            #------------------------------------------------------------
 
-        self.is_tab_2_enabled = False
+            data_to_plot = numpy.zeros((3, len(S)))
+            data_to_plot[0, :] = S / self.workspace_units_to_m
+            data_to_plot[1, :] = I
+            data_to_plot[2, :] = numpy.imag(E)
 
-        if not wise_optical_element.CoreOptics.FigureErrors is None and len(wise_optical_element.CoreOptics.FigureErrors) > 0:
-            self.is_tab_2_enabled = True
-            figure_error_x = numpy.linspace(0, self.length, len(wise_optical_element.CoreOptics.FigureErrors[0]))
-            data_to_plot_fe = numpy.zeros((2, len(figure_error_x)))
+            self.is_tab_2_enabled = False
 
-            data_to_plot_fe[0, :] = figure_error_x
-            data_to_plot_fe[1, :] = wise_optical_element.CoreOptics.FigureErrors[0]*1e9 # nm
+            if not wise_optical_element.CoreOptics.FigureErrors is None and len(wise_optical_element.CoreOptics.FigureErrors) > 0:
+                self.is_tab_2_enabled = True
+                figure_error_x = numpy.linspace(0, self.length, len(wise_optical_element.CoreOptics.FigureErrors[0]))
+                data_to_plot_fe = numpy.zeros((2, len(figure_error_x)))
+
+                data_to_plot_fe[0, :] = figure_error_x
+                data_to_plot_fe[1, :] = wise_optical_element.CoreOptics.FigureErrors[0]*1e9 # nm
+            else:
+                data_to_plot_fe = numpy.zeros((2, 1))
+
+                data_to_plot_fe[0, :] = numpy.zeros(1)
+                data_to_plot_fe[1, :] = numpy.zeros(1)
+
+            return data_to_plot, data_to_plot_fe
         else:
-            data_to_plot_fe = numpy.zeros((2, 1))
-
-            data_to_plot_fe[0, :] = numpy.zeros(1)
-            data_to_plot_fe[1, :] = numpy.zeros(1)
-
-        return data_to_plot, data_to_plot_fe
+            return None, None
 
     def plot_results(self, plot_data, progressBarValue=80):
         if not self.view_type == 0:
@@ -430,35 +433,37 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
                     try:
                         if index < 2:
-                            self.plot_histo(plot_data_1[x_index, :],
-                                            plot_data_1[y_index, :],
-                                            progressBarValue + ((index+1)*progress_bar_step),
-                                            tabs_canvas_index=index,
-                                            plot_canvas_index=index,
-                                            title=titles[index],
-                                            xtitle=xtitles[index],
-                                            ytitle=ytitles[index],
-                                            log_x=log_x,
-                                            log_y=log_y)
+                            if not plot_data_1 is None:
+                                self.plot_histo(plot_data_1[x_index, :],
+                                                plot_data_1[y_index, :],
+                                                progressBarValue + ((index+1)*progress_bar_step),
+                                                tabs_canvas_index=index,
+                                                plot_canvas_index=index,
+                                                title=titles[index],
+                                                xtitle=xtitles[index],
+                                                ytitle=ytitles[index],
+                                                log_x=log_x,
+                                                log_y=log_y)
                         else:
-                            self.plot_histo(plot_data_2[x_index, :],
-                                            plot_data_2[y_index, :],
-                                            progressBarValue + ((index+1)*progress_bar_step),
-                                            tabs_canvas_index=index,
-                                            plot_canvas_index=index,
-                                            title=titles[index],
-                                            xtitle=xtitles[index],
-                                            ytitle=ytitles[index],
-                                            log_x=log_x,
-                                            log_y=log_y)
+                            if not plot_data_2 is None:
+                                self.plot_histo(plot_data_2[x_index, :],
+                                                plot_data_2[y_index, :],
+                                                progressBarValue + ((index+1)*progress_bar_step),
+                                                tabs_canvas_index=index,
+                                                plot_canvas_index=index,
+                                                title=titles[index],
+                                                xtitle=xtitles[index],
+                                                ytitle=ytitles[index],
+                                                log_x=log_x,
+                                                log_y=log_y)
 
-                            if index == 2:
-                                if self.is_tab_2_enabled:
-                                    self.tab[2].setEnabled(True)
-                                    self.plot_canvas[2]._backend.fig.set_facecolor("#FEFEFE")
-                                else:
-                                    self.tab[2].setEnabled(False)
-                                    self.plot_canvas[2]._backend.fig.set_facecolor("#D7DBDD")
+                                if index == 2:
+                                    if self.is_tab_2_enabled:
+                                        self.tab[2].setEnabled(True)
+                                        self.plot_canvas[2]._backend.fig.set_facecolor("#FEFEFE")
+                                    else:
+                                        self.tab[2].setEnabled(False)
+                                        self.plot_canvas[2]._backend.fig.set_facecolor("#D7DBDD")
 
                     except Exception as e:
                         self.view_type_combo.setEnabled(True)

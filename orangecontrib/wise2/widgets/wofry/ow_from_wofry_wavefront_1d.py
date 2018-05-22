@@ -10,10 +10,14 @@ from oasys.widgets import congruence
 from orangecontrib.wise2.util.wise_objects import WiseData
 from orangecontrib.wise2.widgets.gui.ow_wise_widget import WiseWidget
 
-from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagationElements
 from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
 
+from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagationElements
 from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
+from wofrywise2.beamline.wise_beamline_element import WiseBeamlineElement
+from wofrywise2.beamline.wise_optical_element import WiseOpticalElement
+
+from wiselib2 import Fundation, Optics
 
 class OWFromWofryWavefront1d(WiseWidget):
     name = "From Wofry Wavefront 1D"
@@ -86,8 +90,15 @@ class OWFromWofryWavefront1d(WiseWidget):
         return calculation_output[1]
 
     def extract_wise_data_from_calculation_output(self, calculation_output):
-        #TODO: da rivedere
-        return WiseData(wise_wavefront=calculation_output[0], wise_beamline=WisePropagationElements())
+        wavefront = calculation_output[0]
+
+        space = self.wofry_wavefront._electric_field_array.get_abscissas()/self.workspace_units_to_m
+        length = numpy.abs(space[-1] - space[0])
+
+        beamline = WisePropagationElements()
+        beamline.add_beamline_element(WiseBeamlineElement(optical_element=WiseOpticalElement(wise_optical_element=get_dummy_element(wavefront, length))))
+
+        return WiseData(wise_wavefront=wavefront, wise_beamline=beamline)
 
     def set_input(self, input_data):
         self.setStatusMessage("")
@@ -97,3 +108,33 @@ class OWFromWofryWavefront1d(WiseWidget):
             self.source_lambda = round(self.wofry_wavefront._wavelength*1e9, 4)
 
             if self.is_automatic_run: self.compute()
+
+
+class DummyElement(Optics.TransmissionMask):
+    def __init__(self, L, electric_field):
+        super(DummyElement, self).__init__(L=L)
+
+        self.electric_field = electric_field
+
+    def EvalField(self, x1, y1, Lambda, NPools=3, **kwargs):
+        return self.electric_field
+
+def get_dummy_element(wavefront, length):
+    dummy_optical_element = Fundation.OpticalElement(Name="Wofry Element",
+                                                     IsSource=False,
+                                                     Element=DummyElement(length,
+                                                                          wavefront.wise_computation_result.Field),
+                                                     PositioningDirectives= Fundation.PositioningDirectives(ReferTo = Fundation.PositioningDirectives.ReferTo.AbsoluteReference,
+                                                                                                            XYCentre = [0,0],
+                                                                                                            Angle = numpy.deg2rad(0)))
+
+    dummy_optical_element.ComputationResults = wavefront.wise_computation_result
+    dummy_optical_element.ComputationResults.Lambda = wavefront.wise_computation_result.Lambda
+    dummy_optical_element.ComputationSettings.UseCustomSampling = True
+    dummy_optical_element.ComputationSettings.NSamples = 1000
+
+    return dummy_optical_element
+
+
+
+

@@ -1,5 +1,4 @@
 import numpy
-from time import sleep
 
 from PyQt5.QtWidgets import QApplication, QMessageBox, QInputDialog
 from orangewidget import gui
@@ -115,10 +114,10 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         self.tabs_setting.setFixedHeight(self.TABS_AREA_HEIGHT)
         self.tabs_setting.setFixedWidth(self.CONTROL_AREA_WIDTH-5)
 
-        self.tab_bas = oasysgui.createTabPage(self.tabs_setting, "Mirror Setting")
+        self.tab_bas = oasysgui.createTabPage(self.tabs_setting, "O.E. Setting")
         self.tab_pro = oasysgui.createTabPage(self.tabs_setting, "Calculation Setting")
 
-        main_box = oasysgui.widgetBox(self.tab_bas, "Mirror Input Parameters", orientation="vertical", width=self.CONTROL_AREA_WIDTH-20)
+        main_box = oasysgui.widgetBox(self.tab_bas, "O.E. Input Parameters", orientation="vertical", width=self.CONTROL_AREA_WIDTH-20)
 
         oasysgui.lineEdit(main_box, self, "oe_name", "O.E. Name", labelWidth=120, valueType=str, orientation="horizontal")
 
@@ -135,7 +134,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
 
         self.tab_pos = oasysgui.createTabPage(self.tabs_mirror, "Position")
-        self.tab_err = oasysgui.createTabPage(self.tabs_mirror, "Figure Error")
+        if self.has_figure_error_box: self.tab_err = oasysgui.createTabPage(self.tabs_mirror, "Figure Error")
         self.tab_dis = oasysgui.createTabPage(self.tabs_mirror, "Displacement")
 
         super(OWOpticalElement, self).build_positioning_directive_box(container_box=self.tab_pos,
@@ -263,8 +262,9 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
         label = self.le_length.parent().layout().itemAt(0).widget()
         label.setText(label.text() + " [" + self.workspace_units_label + "]")
-        label = self.le_figure_error_step.parent().layout().itemAt(0).widget()
-        label.setText(label.text() + " [" + self.workspace_units_label + "]")
+        if self.has_figure_error_box:
+            label = self.le_figure_error_step.parent().layout().itemAt(0).widget()
+            label.setText(label.text() + " [" + self.workspace_units_label + "]")
         label = self.le_transverse.parent().layout().itemAt(0).widget()
         label.setText(label.text() + " [" + self.workspace_units_label + "]")
         label = self.le_longitudinal.parent().layout().itemAt(0).widget()
@@ -288,6 +288,14 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
         if self.use_multipool == 1:
             congruence.checkStrictlyPositiveNumber(self.n_pools, "Nr. Parallel Processes")
+
+            import multiprocessing
+            number_of_cpus = multiprocessing.cpu_count()
+
+            if number_of_cpus == 1:
+                raise Exception("Parallel processing not available with 1 CPU")
+            elif self.n_pools >= number_of_cpus:
+                raise Exception("Max number of parallel processes allowed on this computer: " + str(number_of_cpus-1))
 
 
     def do_wise_calculation(self):

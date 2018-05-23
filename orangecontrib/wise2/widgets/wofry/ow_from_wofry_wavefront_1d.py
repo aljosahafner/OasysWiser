@@ -75,7 +75,7 @@ class OWFromWofryWavefront1d(WiseWidget):
         data_to_plot[0, :] = self.wofry_wavefront._electric_field_array.get_abscissas()/self.workspace_units_to_m
         data_to_plot[1, :] = numpy.abs(self.wofry_wavefront._electric_field_array.get_values())**2
 
-        return WiseWavefront.fromGenericWavefront(self.wofry_wavefront), data_to_plot
+        return self.wofry_wavefront, WiseWavefront.fromGenericWavefront(self.wofry_wavefront), data_to_plot
 
     def getTitles(self):
         return ["Wavefront Intensity"]
@@ -87,18 +87,16 @@ class OWFromWofryWavefront1d(WiseWidget):
         return ["Intensity [arbitrary units]"]
 
     def extract_plot_data_from_calculation_output(self, calculation_output):
-        return calculation_output[1]
+        return calculation_output[2]
 
     def extract_wise_data_from_calculation_output(self, calculation_output):
-        wavefront = calculation_output[0]
-
-        space = self.wofry_wavefront._electric_field_array.get_abscissas()/self.workspace_units_to_m
-        length = numpy.abs(space[-1] - space[0])
+        wofry_wavefront = calculation_output[0]
+        wise_wavefront = calculation_output[1]
 
         beamline = WisePropagationElements()
-        beamline.add_beamline_element(WiseBeamlineElement(optical_element=WiseOpticalElement(wise_optical_element=get_dummy_element(wavefront, length))))
+        beamline.add_beamline_element(WiseBeamlineElement(optical_element=WiseOpticalElement(wise_optical_element=get_dummy_source(wofry_wavefront))))
 
-        return WiseData(wise_wavefront=wavefront, wise_beamline=beamline)
+        return WiseData(wise_wavefront=wise_wavefront, wise_beamline=beamline)
 
     def set_input(self, input_data):
         self.setStatusMessage("")
@@ -109,32 +107,60 @@ class OWFromWofryWavefront1d(WiseWidget):
 
             if self.is_automatic_run: self.compute()
 
+def get_dummy_source(wofry_wavefront):
+    return Fundation.OpticalElement(Name="Wofry Source",
+                                    IsSource = True,
+                                    Element=DummyElement(wofry_wavefront=wofry_wavefront),
+                                    PositioningDirectives = Fundation.PositioningDirectives(ReferTo = Fundation.PositioningDirectives.ReferTo.AbsoluteReference,
+                                                                                            XYCentre = [0.0, 0.0],
+                                                                                            Angle = 0.0))
 
-class DummyElement(Optics.TransmissionMask):
-    def __init__(self, L, electric_field):
-        super(DummyElement, self).__init__(L=L)
+class DummyElement(Optics.SourceGaussian):
+    def __init__(self, wofry_wavefront=GenericWavefront1D()):
+        self.wofry_wavefront = wofry_wavefront
 
-        self.electric_field = electric_field
+        wavelength = wofry_wavefront.get_wavelength()
+        waist0 = fwhm(wofry_wavefront.get_abscissas(), wofry_wavefront.get_intensity())*numpy.sqrt(2)/1.66
 
-    def EvalField(self, x1, y1, Lambda, NPools=3, **kwargs):
-        return self.electric_field
+        print("WAIST", waist0)
 
-def get_dummy_element(wavefront, length):
-    dummy_optical_element = Fundation.OpticalElement(Name="Wofry Element",
-                                                     IsSource=False,
-                                                     Element=DummyElement(length,
-                                                                          wavefront.wise_computation_result.Field),
-                                                     PositioningDirectives= Fundation.PositioningDirectives(ReferTo = Fundation.PositioningDirectives.ReferTo.AbsoluteReference,
-                                                                                                            XYCentre = [0,0],
-                                                                                                            Angle = numpy.deg2rad(0)))
+        super(DummyElement, self).__init__(Lambda=wavelength, Waist0=waist0)
 
-    dummy_optical_element.ComputationResults = wavefront.wise_computation_result
-    dummy_optical_element.ComputationResults.Lambda = wavefront.wise_computation_result.Lambda
-    dummy_optical_element.ComputationSettings.UseCustomSampling = True
-    dummy_optical_element.ComputationSettings.NSamples = 1000
+    def EvalField_XYSelf(self, z = numpy.array(None) , r = numpy.array(None)):
+        electric_fields = self.wofry_wavefront.get_interpolated_complex_amplitudes(r)
+        #electric_fields = self.wofry_wavefront.get_interpolated_amplitudes(r)
 
-    return dummy_optical_element
+        from matplotlib import pyplot as plt
+        plt.plot(r, numpy.real(electric_fields))
+        plt.plot(r, numpy.imag(electric_fields))
+        plt.show()
 
+        return electric_fields*super(DummyElement, self).EvalField_XYSelf(z, r)
 
+from scipy.interpolate import splrep, sproot, splev
+
+class MultiplePeaks(Exception): pass
+class NoPeaksFound(Exception): pass
+
+def fwhm(x, y, k=3):
+    """
+    Determine full-with-half-maximum of a peaked set of points, x and y.
+
+    Assumes that there is only one peak present in the datasset.  The function
+    uses a spline interpolation of order k.
+    """
+
+    half_max = numpy.max(y)/2.0
+    s = splrep(x, y - half_max, k=k)
+    roots = sproot(s)
+
+    if len(roots) > 2:
+        raise MultiplePeaks("The dataset appears to have multiple peaks, and "
+                "thus the FWHM can't be determined.")
+    elif len(roots) < 2:
+        raise NoPeaksFound("No proper peaks were found in the data set; likely "
+                "the dataset is flat (e.g. all zeros).")
+    else:
+        return abs(roots[1] - roots[0])
 
 

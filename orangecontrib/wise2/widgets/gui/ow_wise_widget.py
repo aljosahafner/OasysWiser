@@ -153,12 +153,11 @@ class WiseWidget(widget.OWWidget):
 
         box = oasysgui.widgetBox(container_box, "Positioning Directives", orientation="vertical", width=width)
 
-        box_combos  = oasysgui.widgetBox(box, "", orientation="vertical", width=width-20)
+        box_combos = oasysgui.widgetBox(box, "", orientation="vertical", width=width-20)
 
         box_Distance = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
         box_Distance_check = oasysgui.widgetBox(box_Distance, "", orientation="horizontal", width=20)
         box_Distance_value = oasysgui.widgetBox(box_Distance, "", orientation="horizontal")
-
 
         box_XYCentre = oasysgui.widgetBox(box, "", orientation="horizontal", width=width-20)
         box_XYCentre_check = oasysgui.widgetBox(box_XYCentre, "", orientation="horizontal", width=20)
@@ -196,17 +195,26 @@ class WiseWidget(widget.OWWidget):
             pass
             #set_WhichAngle()
 
-        gui.comboBox(box_combos, self, "What", label="What",
-                     items=positioning_directives_what, labelWidth=box_combos.width()-150,
+        box_what = oasysgui.widgetBox(box_combos, "", orientation="horizontal")
+        gui.label(box_what, self, label="  ", labelWidth=20)
+        gui.comboBox(box_what, self, "What", label="",
+                     items=positioning_directives_what,
                      sendSelectedValue=True, orientation="horizontal", callback=set_positioning_directives)
+        gui.label(box_what, self, label=" of this O.E.", labelWidth=80)
 
-        gui.comboBox(box_combos, self, "Where", label="Where",
-                     items=positioning_directives_where, labelWidth=box_combos.width()-150,
+        box_where = oasysgui.widgetBox(box_combos, "", orientation="horizontal")
+        gui.label(box_where, self, label="at", labelWidth=20)
+        gui.comboBox(box_where, self, "Where", label="",
+                     items=positioning_directives_where,
                      sendSelectedValue=True, orientation="horizontal", callback=set_positioning_directives)
+        gui.label(box_where, self, label=" of", labelWidth=80)
 
-        gui.comboBox(box_combos, self, "ReferTo", label="Refer To",
-                     items=positioning_directives_refer_to, labelWidth=box_combos.width()-150,
+        box_refer_to = oasysgui.widgetBox(box_combos, "", orientation="horizontal")
+        gui.label(box_refer_to, self, label=" ", labelWidth=20)
+        gui.comboBox(box_refer_to, self, "ReferTo", label="",
+                     items=positioning_directives_refer_to,
                      sendSelectedValue=True, orientation="horizontal", callback=set_positioning_directives)
+        gui.label(box_refer_to, self, label=" O.E.", labelWidth=80)
 
         '''
         gui.comboBox(box_combos, self, "WhichAngle", label="Type Of Angle",
@@ -409,7 +417,7 @@ class WiseWidget(widget.OWWidget):
 
             self.setStatusMessage("Error!")
 
-            raise exception
+            #raise exception
 
         self.progressBarFinished()
 

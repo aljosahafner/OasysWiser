@@ -22,11 +22,8 @@ from orangecontrib.wise2.widgets.gui.ow_wise_widget import WiseWidget, ElementTy
 def initialize_propagator_1D():
     PropagationManager.Instance().add_propagator(WisePropagator())
     print("Propagation Manager is initialized")
-try:
-    initialize_propagator_1D()
-except Exception as e:
-    raise e
 
+initialize_propagator_1D()
 
 class OWOpticalElement(WiseWidget, WidgetDecorator):
     category = ""
@@ -40,6 +37,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     alpha = Setting(2)
     length = Setting(400)
+    ignore = Setting(False)
 
     use_small_displacements = Setting(0)
     rotation = Setting(0.0)
@@ -76,7 +74,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
                 if input_data.wise_beamline is None or input_data.wise_beamline.get_propagation_elements_number() == 0:
                     if input_data.wise_wavefront is None: raise ValueError("Input Data contains no wavefront and/or no source to perform wavefront propagation")
 
-                self.input_data = input_data
+                self.input_data = input_data.duplicate()
 
                 if self.is_automatic_run: self.compute()
             except Exception as e:
@@ -126,6 +124,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
 
         self.build_mirror_specific_gui(main_box)
+
+        gui.comboBox(main_box, self, "ignore", label="Ignore", items=["No", "Yes"], labelWidth=240, sendSelectedValue=False, orientation="horizontal")
 
         gui.separator(main_box)
 
@@ -306,6 +306,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
         wise_optical_element = optical_element.wise_optical_element
 
+        wise_optical_element.CoreOptics.ComputationSettings.Ignore = (self.ignore == 1)
+
         if self.use_small_displacements == 1:
             wise_optical_element.CoreOptics.ComputationSettings.UseSmallDisplacements = True # serve per traslare/ruotare l'EO
             wise_optical_element.CoreOptics.SmallDisplacements.Rotation = numpy.deg2rad(self.rotation)
@@ -349,7 +351,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         parameters = PropagationParameters(wavefront=input_wavefront if not input_wavefront is None else WiseWavefront(wise_computation_results=None),
                                            propagation_elements=output_data.wise_beamline)
 
-        parameters.set_additional_parameters("single_propagation", True if PropagationManager.Instance().get_interactive_mode() == InteractiveMode.ENABLED else (not self.is_full_propagator))
+#        parameters.set_additional_parameters("single_propagation", True if PropagationManager.Instance().get_interactive_mode() == InteractiveMode.ENABLED else (not self.is_full_propagator))
+        parameters.set_additional_parameters("single_propagation", False)
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
         parameters.set_additional_parameters("is_full_propagator", self.is_full_propagator)
 

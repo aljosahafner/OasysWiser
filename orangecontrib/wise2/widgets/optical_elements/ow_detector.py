@@ -40,6 +40,14 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
     def after_change_workspace_units(self):
         super(OWDetector, self).after_change_workspace_units()
 
+        label = self.le_defocus_start.parent().layout().itemAt(0).widget()
+        label.setText(label.text() + " [" + self.workspace_units_label + "]")
+        label = self.le_defocus_stop.parent().layout().itemAt(0).widget()
+        label.setText(label.text() + " [" + self.workspace_units_label + "]")
+        label = self.le_defocus_step.parent().layout().itemAt(0).widget()
+        label.setText(label.text() + " [" + self.workspace_units_label + "]")
+
+
     def check_fields(self):
         super(OWDetector, self).check_fields()
 
@@ -130,8 +138,8 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
 
             sys.stdout = EmittingStream(textWritten=self.writeStdOut)
 
-            # TODO: TO BE FOUND THE EQUiVALENT OF THE OLD QUANTITY!!!!
-            self.oe_f2 = 0.0
+            # TODO: TO BE CHECKED THE EQUiVALENT OF THE OLD QUANTITY!!!!
+            self.oe_f2 = self.input_data.wise_beamline.wise_propagation_elements.get_wise_propagation_element(-1).PositioningDirectives.Distance
 
             self.check_fields()
             if self.defocus_start >= self.defocus_stop: raise Exception("Defocus sweep start must be < Defocus sweep stop")
@@ -190,38 +198,33 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
 
             self.run_calculation = True
 
-            # TODO: TO BE OPTIMIZED FOR THE NON INTERACTIVE MODE: NOW IT IS ABLE TO COMPLETE THE FULL SCAN WITHOUT CYCLING
+            self.defocus_list[numpy.where(numpy.abs(self.defocus_list) < 1e-15)] = 0.0
 
-            for i, defocus in enumerate(self.defocus_list):
-                if not self.run_calculation:
-                    if not self.best_focus_slider is None: self.best_focus_slider.valueChanged.connect(self.plot_detail)
-                    return
+            if self.show_animation == 1:
+                for i, defocus in enumerate(self.defocus_list):
+                    if not self.run_calculation:
+                        if not self.best_focus_slider is None: self.best_focus_slider.valueChanged.connect(self.plot_detail)
+                        return
 
-                if numpy.abs(defocus) < 1e-15:
-                    defocus = 0.0
-                    self.defocus_list[i] = 0.0
+                    ResultList, HewList, SigmaList, More = Fundation.FocusSweep(last_element, [self.defocus_list[i]],
+                                                                               DetectorSize = self.length*self.workspace_units_to_m,
+                                                                               NPools = n_pools)
 
+                    S = ResultList[0].S
+                    E = ResultList[0].Field
+                    I = abs(E)**2
+                    norm = max(I)
+                    norm = 1.0 if norm == 0.0 else norm
+                    I = I/norm
+                    HEW = HewList[0]
 
-                ResultList, HewList, SigmaList, More = Fundation.FocusSweep(last_element, [self.defocus_list[i]],
-                                                                           DetectorSize = self.length*self.workspace_units_to_m,
-                                                                           NPools = n_pools)
+                    # E1
+                    self.electric_fields_list.append(E)
+                    self.positions_list.append(S)
+                    self.hews_list.append(HEW)
 
-                S = ResultList[0].S
-                E = ResultList[0].Field
-                I = abs(E)**2
-                norm = max(I)
-                norm = 1.0 if norm == 0.0 else norm
-                I = I/norm
-                HEW = HewList[0]
+                    self.best_focus_slider.setValue(i)
 
-                # E1
-                self.electric_fields_list.append(E)
-                self.positions_list.append(S)
-                self.hews_list.append(HEW)
-
-                self.best_focus_slider.setValue(i)
-
-                if self.show_animation == 1:
                     self.plot_histo(S * 1e6,
                                     I,
                                     i*progress_bar_increment,
@@ -235,16 +238,35 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
                                     log_y=False)
 
                     self.tabs.setCurrentIndex(2)
-                else:
-                    self.progressBarSet(value=i*progress_bar_increment)
 
-                hew = round(HEW*1e6, 11) # problems with double precision numbers: inconsistent comparisons
+                    hew = round(HEW*1e6, 11) # problems with double precision numbers: inconsistent comparisons
 
-                if hew < hew_min:
-                    hew_min = hew
-                    index_min_list = [i]
-                elif hew == hew_min:
-                    index_min_list.append(i)
+                    if hew < hew_min:
+                        hew_min = hew
+                        index_min_list = [i]
+                    elif hew == hew_min:
+                        index_min_list.append(i)
+            else: # NOT INTERACTIVE
+                ResultList, HewList, SigmaList, More = Fundation.FocusSweep(last_element,
+                                                                            self.defocus_list,
+                                                                            DetectorSize = self.length*self.workspace_units_to_m,
+                                                                            NPools = n_pools)
+
+                i=0
+                for Result, HEW in zip(ResultList, HewList):
+                    self.electric_fields_list.append(Result.Field)
+                    self.positions_list.append(Result.S)
+                    self.hews_list.append(HEW)
+
+                    hew = round(HEW*1e6, 11) # problems with double precision numbers: inconsistent comparisons
+
+                    if hew < hew_min:
+                        hew_min = hew
+                        index_min_list = [i]
+                    elif hew == hew_min:
+                        index_min_list.append(i)
+
+                    i += 1
 
             index_min = index_min_list[int(len(index_min_list)/2)] # choosing the central value, when hew reach a pletau
 
@@ -296,7 +318,7 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
 
             self.best_focus_slider.setValue(index_min)
 
-            self.tabs.setCurrentIndex(3)
+            self.tabs.setCurrentIndex(3 if self.show_animation == 1 else 2)
             self.setStatusMessage("")
 
             self.save_button.setEnabled(True)

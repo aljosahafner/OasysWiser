@@ -13,7 +13,7 @@ NAME = "WISE 2 Light Sources"
 
 DESCRIPTION = "Widgets for WISE 2"
 
-BACKGROUND = "#FE2E2E"
+BACKGROUND = "#FD8D8D"
 
 ICON = "icons/source.png"
 

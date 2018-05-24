@@ -252,8 +252,8 @@ class WiseWidget(widget.OWWidget):
         return PositioningDirectives(PlaceWhat=self.What,
                                      PlaceWhere=self.Where,
                                      ReferTo=self.ReferTo,
-                                     XYCentre=None if self.XYCentre_checked == 0 else [self.XCentre, self.YCentre],
-                                     Distance=None if self.Distance_checked == 0 else self.Distance) #,
+                                     XYCentre=None if self.XYCentre_checked == 0 else [self.XCentre*self.workspace_units_to_m, self.YCentre*self.workspace_units_to_m],
+                                     Distance=None if self.Distance_checked == 0 else self.Distance*self.workspace_units_to_m) #,
                                      #WhichAngle=self.WhichAngle,
                                      #GrazingAngle=None if self.GrazingAngle_checked == 0 else numpy.deg2rad(self.GrazingAngle),
                                      #Angle = None if self.Angle_checked == 0 else numpy.deg2rad(0))

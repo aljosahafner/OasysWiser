@@ -35,8 +35,8 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     oe_name = Setting("Optical Element")
 
-    alpha = Setting(2)
-    length = Setting(400)
+    alpha = Setting(2.0)
+    length = Setting(400.0)
     ignore = Setting(False)
 
     use_small_displacements = Setting(0)

@@ -13,7 +13,7 @@ NAME = "WISE 2 - WOFRY"
 
 DESCRIPTION = "Widgets for WISE 2"
 
-BACKGROUND = "#FE2E2E"
+BACKGROUND = "#FD8D8D"
 
 ICON = "icons/wavefront_propagation.png"
 

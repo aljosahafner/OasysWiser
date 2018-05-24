@@ -20,6 +20,12 @@ class OWPlaneMirror(OWOpticalElement, WidgetDecorator):
         super(OWPlaneMirror, self).after_change_workspace_units()
 
     def check_fields(self):
+        if self.use_figure_error == 1:
+            self.use_figure_error = 0
+            self.set_UseFigureError()
+
+            raise NotImplementedError("Figure Error is not yet supported for plane mirrors")
+
         super(OWPlaneMirror, self).check_fields()
 
     def build_mirror_specific_gui(self, container_box):

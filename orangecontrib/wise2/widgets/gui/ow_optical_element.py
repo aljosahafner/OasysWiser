@@ -330,6 +330,9 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
             wise_optical_element.CoreOptics.ComputationSettings.UseFigureError = False
 
         if self.use_roughness == 1:
+            self.use_roughness = 0
+            self.set_UseRoughness()
+
             raise NotImplementedError("Roughness Not yet supported")
         else:
             wise_optical_element.CoreOptics.ComputationSettings.UseRoughness = False
@@ -351,8 +354,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         parameters = PropagationParameters(wavefront=input_wavefront if not input_wavefront is None else WiseWavefront(wise_computation_results=None),
                                            propagation_elements=output_data.wise_beamline)
 
-#        parameters.set_additional_parameters("single_propagation", True if PropagationManager.Instance().get_interactive_mode() == InteractiveMode.ENABLED else (not self.is_full_propagator))
-        parameters.set_additional_parameters("single_propagation", False)
+        parameters.set_additional_parameters("single_propagation", True if PropagationManager.Instance().get_interactive_mode() == InteractiveMode.ENABLED else (not self.is_full_propagator))
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
         parameters.set_additional_parameters("is_full_propagator", self.is_full_propagator)
 

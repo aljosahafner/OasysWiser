@@ -139,7 +139,7 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
             sys.stdout = EmittingStream(textWritten=self.writeStdOut)
 
             # TODO: TO BE CHECKED THE EQUiVALENT OF THE OLD QUANTITY!!!!
-            self.oe_f2 = self.input_data.wise_beamline.wise_propagation_elements.get_wise_propagation_element(-1).PositioningDirectives.Distance
+            self.oe_f2 = self.input_data.wise_beamline.get_wise_propagation_element(-1).PositioningDirectives.Distance
 
             self.check_fields()
             if self.defocus_start >= self.defocus_stop: raise Exception("Defocus sweep start must be < Defocus sweep stop")

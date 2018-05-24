@@ -1,10 +1,14 @@
 __author__ = 'labx'
 
-from PyQt5 import QtWidgets
+from PyQt5.QtGui import QPalette, QColor
+
 from orangecanvas.scheme.link import SchemeLink
 from oasys.menus.menu import OMenu
 
-from wofry.propagator.propagator import PropagationManager, InteractiveMode
+from wofry.propagator.propagator import PropagationManager, PropagationMode
+from wofrywise2.propagator.propagator1D.wise_propagator import WISE_APPLICATION
+
+from orangecontrib.wise2.util.wise_util import showWarningMessage, showCriticalMessage
 
 class WiseToolsMenu(OMenu):
 
@@ -12,54 +16,37 @@ class WiseToolsMenu(OMenu):
         super().__init__(name="WISEr Tools")
 
         self.openContainer()
-        self.addContainer("Interactive Mode")
-        self.addSubMenu("Enable Interative Mode")
-        self.addSubMenu("Disable Interactive Mode")
+        self.addContainer("Live Propagation Mode")
+        self.addSubMenu("Element by Element")
+        self.addSubMenu("Whole beamline at Detector")
         self.closeContainer()
+
+        PropagationManager.Instance().set_propagation_mode(WISE_APPLICATION, PropagationMode.STEP_BY_STEP)
 
     def executeAction_1(self, action):
         try:
-            PropagationManager.Instance().set_interactive_mode(InteractiveMode.ENABLED)
-            self.showWarningMessage("Interactive Mode is Enabled")
+            PropagationManager.Instance().set_propagation_mode(WISE_APPLICATION, PropagationMode.STEP_BY_STEP)
+            showWarningMessage("Live Propagation Mode: Element by Element")
+
+            self.set_wise_live_propagation_mode()
         except Exception as exception:
-            self.showCriticalMessage(exception.args[0])
+            showCriticalMessage(exception.args[0])
 
     def executeAction_2(self, action):
         try:
-            PropagationManager.Instance().set_interactive_mode(InteractiveMode.DISABLED)
-            self.showWarningMessage("Interactive Mode is Disabled")
+            PropagationManager.Instance().set_propagation_mode(WISE_APPLICATION, PropagationMode.WHOLE_BEAMLINE)
+            showWarningMessage("Live Propagation Mode: Whole beamline at Detector")
+
+            self.set_wise_live_propagation_mode()
         except Exception as exception:
-            self.showCriticalMessage(exception.args[0])
+            showCriticalMessage(exception.args[0])
 
-    ###############################################################
-    #
-    # MESSAGING
-    #
-    ###############################################################
+    def set_wise_live_propagation_mode(self):
+        for node in self.canvas_main_window.current_document().scheme().nodes:
+            widget = self.canvas_main_window.current_document().scheme().widget_for_node(node)
 
-    def showConfirmMessage(self, message, informative_text):
-        msgBox = QtWidgets.QMessageBox()
-        msgBox.setIcon(QtWidgets.QMessageBox.Question)
-        msgBox.setText(message)
-        msgBox.setInformativeText(informative_text)
-        msgBox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-        msgBox.setDefaultButton(QtWidgets.QMessageBox.No)
+            if hasattr(widget, "wise_live_propagation_mode"): widget.set_wise_live_propagation_mode()
 
-        return msgBox.exec_()
-
-    def showWarningMessage(self, message):
-        msgBox = QtWidgets.QMessageBox()
-        msgBox.setIcon(QtWidgets.QMessageBox.Warning)
-        msgBox.setText(message)
-        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msgBox.exec_()
-
-    def showCriticalMessage(self, message):
-        msgBox = QtWidgets.QMessageBox()
-        msgBox.setIcon(QtWidgets.QMessageBox.Critical)
-        msgBox.setText(message)
-        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msgBox.exec_()
 
     #################################################################
     #

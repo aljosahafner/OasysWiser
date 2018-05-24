@@ -1,6 +1,8 @@
 import numpy
+import multiprocessing
 
 from PyQt5.QtWidgets import QApplication, QMessageBox, QInputDialog
+from PyQt5.QtGui import QPalette, QColor, QFont
 from orangewidget import gui
 from orangewidget.settings import Setting
 from oasys.widgets import gui as oasysgui
@@ -9,21 +11,14 @@ from oasys.widgets import congruence
 from syned.widget.widget_decorator import WidgetDecorator
 from syned.beamline.optical_elements.mirrors.mirror import Mirror
 
-from wofry.propagator.propagator import PropagationManager, PropagationParameters, InteractiveMode
+from wofry.propagator.propagator import PropagationManager, PropagationParameters, PropagationMode
 
-from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WisePropagationElements
+from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WisePropagationElements, WISE_APPLICATION
 from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
 from wofrywise2.beamline.wise_beamline_element import WiseBeamlineElement
 
 from orangecontrib.wise2.util.wise_objects import WiseData, WisePreInputData
 from orangecontrib.wise2.widgets.gui.ow_wise_widget import WiseWidget, ElementType
-
-
-def initialize_propagator_1D():
-    PropagationManager.Instance().add_propagator(WisePropagator())
-    print("Propagation Manager is initialized")
-
-initialize_propagator_1D()
 
 class OWOpticalElement(WiseWidget, WidgetDecorator):
     category = ""
@@ -58,6 +53,9 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     use_multipool = Setting(0)
     n_pools = Setting(5)
+    number_of_cpus = multiprocessing.cpu_count() - 1
+    force_cpus = Setting(1)
+
     calculation_type = Setting(0)
     number_of_points = Setting(7000)
 
@@ -66,48 +64,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
     has_figure_error_box = True
     is_full_propagator   = False
 
-    def set_input(self, input_data):
-        self.setStatusMessage("")
-
-        if not input_data is None:
-            try:
-                if input_data.wise_beamline is None or input_data.wise_beamline.get_propagation_elements_number() == 0:
-                    if input_data.wise_wavefront is None: raise ValueError("Input Data contains no wavefront and/or no source to perform wavefront propagation")
-
-                self.input_data = input_data.duplicate()
-
-                if self.is_automatic_run: self.compute()
-            except Exception as e:
-                QMessageBox.critical(self, "Error", str(e), QMessageBox.Ok)
-
-                self.setStatusMessage("Error")
-
-
-    def set_pre_input(self, data):
-        if data is not None:
-            try:
-                if data.figure_error_file != WisePreInputData.NONE:
-                    self.figure_error_file = data.figure_error_file
-                    self.figure_error_step = data.figure_error_step
-                    self.figure_error_um_conversion = data.figure_user_units_to_m
-                    self.use_figure_error = 1
-
-                    self.set_UseFigureError()
-
-                if data.roughness_file != WisePreInputData.NONE:
-                    self.roughness_file=data.roughness_file
-                    self.roughness_x_scaling = data.roughness_x_scaling
-                    self.roughness_y_scaling = data.roughness_y_scaling
-                    self.use_roughness = 1
-
-                    self.set_UseRoughness()
-            except Exception as e:
-                QMessageBox.critical(self, "Error", str(e), QMessageBox.Ok)
-
-                self.setStatusMessage("Error")
-
     def build_gui(self):
-
         self.tabs_setting = oasysgui.tabWidget(self.controlArea)
         self.tabs_setting.setFixedHeight(self.TABS_AREA_HEIGHT)
         self.tabs_setting.setFixedWidth(self.CONTROL_AREA_WIDTH-5)
@@ -224,10 +181,26 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
                      items=["No", "Yes"], labelWidth=240,
                      callback=self.set_Multipool, sendSelectedValue=False, orientation="horizontal")
 
-        self.use_multipool_box = oasysgui.widgetBox(parallel_box, "", addSpace=True, orientation="vertical", height=30, width=self.CONTROL_AREA_WIDTH-40)
-        self.use_multipool_box_empty = oasysgui.widgetBox(parallel_box, "", addSpace=True, orientation="vertical", height=30, width=self.CONTROL_AREA_WIDTH-40)
+        self.use_multipool_box = oasysgui.widgetBox(parallel_box, "", addSpace=False, orientation="vertical", height=100, width=self.CONTROL_AREA_WIDTH-40)
+        self.use_multipool_box_empty = oasysgui.widgetBox(parallel_box, "", addSpace=False, orientation="vertical", height=100, width=self.CONTROL_AREA_WIDTH-40)
 
         oasysgui.lineEdit(self.use_multipool_box, self, "n_pools", "Nr. Parallel Processes", labelWidth=240, valueType=int, orientation="horizontal")
+
+        gui.separator(self.use_multipool_box)
+
+        gui.comboBox(self.use_multipool_box, self, "force_cpus", label="Ignore Nr. Processes > Nr. CPUs",
+                     items=["No", "Yes"], labelWidth=240,
+                     sendSelectedValue=False, orientation="horizontal")
+
+        le = oasysgui.lineEdit(self.use_multipool_box, self, "number_of_cpus", "Nr. Available CPUs", labelWidth=240, valueType=float, orientation="horizontal")
+        le.setReadOnly(True)
+        font = QFont(le.font())
+        font.setBold(True)
+        le.setFont(font)
+        palette = QPalette(le.palette())
+        palette.setColor(QPalette.Text, QColor('dark blue'))
+        palette.setColor(QPalette.Base, QColor(243, 240, 140))
+        le.setPalette(palette)
 
         self.set_Multipool()
 
@@ -273,6 +246,45 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
     def build_mirror_specific_gui(self, container_box):
         raise NotImplementedError()
 
+    def set_input(self, input_data):
+        self.setStatusMessage("")
+
+        if not input_data is None:
+            try:
+                if input_data.wise_beamline is None or input_data.wise_beamline.get_propagation_elements_number() == 0:
+                    if input_data.wise_wavefront is None: raise ValueError("Input Data contains no wavefront and/or no source to perform wavefront propagation")
+
+                self.input_data = input_data.duplicate()
+
+                if self.is_automatic_run: self.compute()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e), QMessageBox.Ok)
+
+                self.setStatusMessage("Error")
+
+    def set_pre_input(self, data):
+        if data is not None:
+            try:
+                if data.figure_error_file != WisePreInputData.NONE:
+                    self.figure_error_file = data.figure_error_file
+                    self.figure_error_step = data.figure_error_step
+                    self.figure_error_um_conversion = data.figure_user_units_to_m
+                    self.use_figure_error = 1
+
+                    self.set_UseFigureError()
+
+                if data.roughness_file != WisePreInputData.NONE:
+                    self.roughness_file=data.roughness_file
+                    self.roughness_x_scaling = data.roughness_x_scaling
+                    self.roughness_y_scaling = data.roughness_y_scaling
+                    self.use_roughness = 1
+
+                    self.set_UseRoughness()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e), QMessageBox.Ok)
+
+                self.setStatusMessage("Error")
+
     def check_fields(self):
         self.alpha = congruence.checkAngle(self.alpha, "Incidence Angle")
         self.length = congruence.checkStrictlyPositiveNumber(self.length, "Length")
@@ -289,13 +301,11 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         if self.use_multipool == 1:
             congruence.checkStrictlyPositiveNumber(self.n_pools, "Nr. Parallel Processes")
 
-            import multiprocessing
-            number_of_cpus = multiprocessing.cpu_count()
-
-            if number_of_cpus == 1:
-                raise Exception("Parallel processing not available with 1 CPU")
-            elif self.n_pools >= number_of_cpus:
-                raise Exception("Max number of parallel processes allowed on this computer: " + str(number_of_cpus-1))
+            if self.force_cpus == 0:
+                if self.number_of_cpus == 1:
+                    raise Exception("Parallel processing not available with 1 CPU")
+                elif self.n_pools >= self.number_of_cpus:
+                    raise Exception("Max number of parallel processes allowed on this computer (" + str(self.number_of_cpus) + ")")
 
 
     def do_wise_calculation(self):
@@ -354,7 +364,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
         parameters = PropagationParameters(wavefront=input_wavefront if not input_wavefront is None else WiseWavefront(wise_computation_results=None),
                                            propagation_elements=output_data.wise_beamline)
 
-        parameters.set_additional_parameters("single_propagation", True if PropagationManager.Instance().get_interactive_mode() == InteractiveMode.ENABLED else (not self.is_full_propagator))
+        parameters.set_additional_parameters("single_propagation", True if PropagationManager.Instance().get_propagation_mode(WISE_APPLICATION) == PropagationMode.STEP_BY_STEP else (not self.is_full_propagator))
         parameters.set_additional_parameters("NPools", self.n_pools if self.use_multipool == 1 else 1)
         parameters.set_additional_parameters("is_full_propagator", self.is_full_propagator)
 

@@ -1,8 +1,9 @@
 import sys
 
 from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtCore import QRect
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QPalette, QColor, QFont
 
 from orangewidget import gui
 from orangewidget.settings import Setting
@@ -16,6 +17,17 @@ from orangecontrib.wise2.util.wise_objects import WiseData
 
 from wiselib2.Fundation import PositioningDirectives
 import wiselib2.Optics as Optics
+
+from wofry.propagator.propagator import PropagationManager, PropagationMode
+from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WISE_APPLICATION
+
+def initialize_propagator_1D():
+    PropagationManager.Instance().add_propagator(WisePropagator())
+    print("Propagation Manager is initialized")
+try:
+    initialize_propagator_1D()
+except:
+    pass
 
 positioning_directives_what = [PositioningDirectives.What.Centre,
                                PositioningDirectives.What.UpstreamFocus,
@@ -84,6 +96,8 @@ class WiseWidget(widget.OWWidget):
     GrazingAngle_checked = Setting(0)
     Angle_checked = Setting(0)
 
+    wise_live_propagation_mode = "Unknown"
+
     def __init__(self):
         super().__init__()
 
@@ -128,6 +142,23 @@ class WiseWidget(widget.OWWidget):
                                             items=["No", "Yes"],
                                             callback=self.set_ViewType, sendSelectedValue=False, orientation="horizontal")
 
+        oasysgui.widgetBox(self.view_box, "", addSpace=False, orientation="vertical", width=100)
+
+
+        #* -------------------------------------------------------------------------------------------------------------
+        propagation_box = oasysgui.widgetBox(self.view_box, "", addSpace=False, orientation="vertical")
+
+        self.le_wise_live_propagation_mode = gui.lineEdit(propagation_box, self, "wise_live_propagation_mode", "Propagation Mode", labelWidth=150, valueType=str, orientation="horizontal")
+        self.le_wise_live_propagation_mode.setAlignment(Qt.AlignCenter)
+        self.le_wise_live_propagation_mode.setReadOnly(True)
+        font = QFont(self.le_wise_live_propagation_mode.font())
+        font.setBold(True)
+        self.le_wise_live_propagation_mode.setFont(font)
+
+        self.set_wise_live_propagation_mode()
+
+        #* -------------------------------------------------------------------------------------------------------------
+
         self.tab = []
         self.tabs = oasysgui.tabWidget(plot_tab)
 
@@ -144,6 +175,21 @@ class WiseWidget(widget.OWWidget):
         self.wise_output.setFixedWidth(700)
 
         gui.rubber(self.mainArea)
+
+    def set_wise_live_propagation_mode(self):
+        self.wise_live_propagation_mode = "Element by Element" if PropagationManager.Instance().get_propagation_mode(WISE_APPLICATION) == PropagationMode.STEP_BY_STEP  else \
+                                          "Whole beamline at Detector" if PropagationManager.Instance().get_propagation_mode(WISE_APPLICATION) == PropagationMode.WHOLE_BEAMLINE else \
+                                          "Unknown"
+
+        palette = QPalette(self.le_wise_live_propagation_mode.palette())
+
+        color = 'dark green' if PropagationManager.Instance().get_propagation_mode(WISE_APPLICATION) == PropagationMode.STEP_BY_STEP  else \
+                'dark red' if PropagationManager.Instance().get_propagation_mode(WISE_APPLICATION) == PropagationMode.WHOLE_BEAMLINE else \
+                'black'
+
+        palette.setColor(QPalette.Text, QColor(color))
+        palette.setColor(QPalette.Base, QColor(243, 240, 140))
+        self.le_wise_live_propagation_mode.setPalette(palette)
 
     def build_gui(self):
         pass

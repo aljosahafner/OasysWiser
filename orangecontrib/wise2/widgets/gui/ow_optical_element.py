@@ -210,6 +210,14 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
     def selectRoughnessFile(self):
         self.le_roughness_file.setText(oasysgui.selectFileFromDialog(self, self.roughness_file, "Select File", file_extension_filter="Data Files (*.dat *.txt)"))
 
+    def set_FigureErrorPlot(self):
+        if self.use_figure_error == 1:
+            self.tab[2].setEnabled(True)
+            self.plot_canvas[2]._backend.fig.set_facecolor("#FEFEFE")
+        else:
+            self.tab[2].setEnabled(False)
+            self.plot_canvas[2]._backend.fig.set_facecolor("#D7DBDD")
+
     def set_UseFigureError(self):
         self.use_figure_error_box.setVisible(self.use_figure_error == 1)
         self.use_figure_error_box_empty.setVisible(self.use_figure_error == 0)
@@ -480,13 +488,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
                                                 log_x=log_x,
                                                 log_y=log_y)
 
-                                if index == 2:
-                                    if self.is_tab_2_enabled:
-                                        self.tab[2].setEnabled(True)
-                                        self.plot_canvas[2]._backend.fig.set_facecolor("#FEFEFE")
-                                    else:
-                                        self.tab[2].setEnabled(False)
-                                        self.plot_canvas[2]._backend.fig.set_facecolor("#D7DBDD")
+                                if index == 2: self.set_FigureErrorPlot()
 
                     except Exception as e:
                         self.view_type_combo.setEnabled(True)

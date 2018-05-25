@@ -9,8 +9,8 @@ except AttributeError:
 
 
 NAME = 'OASYS1-WISE2'
-VERSION = '0.0.1'
-ISRELEASED = False
+VERSION = '1.0.0'
+ISRELEASED = True
 
 DESCRIPTION = 'WISE 2 in Python'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.txt')

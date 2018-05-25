@@ -35,6 +35,8 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
     defocus_step = Setting(0.1)
     show_animation = Setting(0)
 
+    output_data_best_focus = None
+
     _defocus_sign = 1
 
     def after_change_workspace_units(self):
@@ -131,15 +133,23 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
     def stop_best_focus_calculation(self):
         self.run_calculation = False
 
+    def do_wise_calculation(self):
+        self.output_data_best_focus = super(OWDetector, self).do_wise_calculation()
+
+        return self.output_data_best_focus
+
     def do_best_focus_calculation(self):
         try:
             if self.input_data is None:
                 raise Exception("No Input Data!")
 
+            if not self.output_data_best_focus:
+                raise Exception("Run computation first!")
+
             sys.stdout = EmittingStream(textWritten=self.writeStdOut)
 
             # TODO: TO BE CHECKED THE EQUiVALENT OF THE OLD QUANTITY!!!!
-            self.oe_f2 = self.input_data.wise_beamline.get_wise_propagation_element(-1).PositioningDirectives.Distance
+            self.oe_f2 = self.output_data_best_focus.wise_beamline.get_wise_propagation_element(-1).PositioningDirectives.Distance
 
             self.check_fields()
             if self.defocus_start >= self.defocus_stop: raise Exception("Defocus sweep start must be < Defocus sweep stop")
@@ -334,7 +344,7 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
         self.progressBarFinished()
 
     def get_last_element(self):
-        last_element = self.input_data.wise_beamline.get_wise_propagation_element(-1)
+        last_element = self.output_data_best_focus.wise_beamline.get_wise_propagation_element(-1)
 
         if isinstance(last_element.CoreOptics, Optics.Detector):
             return last_element.Parent

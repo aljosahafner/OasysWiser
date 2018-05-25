@@ -53,7 +53,7 @@ PACKAGE_DATA = {
     "orangecontrib.wise2.widgets.light_sources":["icons/*.png", "icons/*.jpg"],
     "orangecontrib.wise2.widgets.optical_elements":["icons/*.png", "icons/*.jpg"],
     "orangecontrib.wise2.widgets.tools":["icons/*.png", "icons/*.jpg"],
-    "orangecontrib.wise2.widgets.wofry":["icons/*.png", "icons/*.jpg"],
+    #"orangecontrib.wise2.widgets.wofry":["icons/*.png", "icons/*.jpg"],
 }
 
 NAMESPACE_PACAKGES = ["orangecontrib", "orangecontrib.wise2", "orangecontrib.wise2.widgets"]
@@ -64,7 +64,7 @@ ENTRY_POINTS = {
         "WISEr Light Sources = orangecontrib.wise2.widgets.light_sources",
         "WISEr Optical Elements = orangecontrib.wise2.widgets.optical_elements",
         "WISEr Tools = orangecontrib.wise2.widgets.tools",
-        "WISEr Wofry = orangecontrib.wise2.widgets.wofry",
+        #"WISEr Wofry = orangecontrib.wise2.widgets.wofry",
     ),
     'oasys.menus' : ("wisemenu = orangecontrib.wise2.menu",)
 }

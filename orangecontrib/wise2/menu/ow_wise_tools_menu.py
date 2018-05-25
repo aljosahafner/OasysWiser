@@ -9,6 +9,7 @@ from wofry.propagator.propagator import PropagationManager, PropagationMode
 from wofrywise2.propagator.propagator1D.wise_propagator import WISE_APPLICATION
 
 from orangecontrib.wise2.util.wise_util import showWarningMessage, showCriticalMessage
+from orangecontrib.wise2.widgets.optical_elements.ow_detector import OWDetector
 
 class WiseToolsMenu(OMenu):
 
@@ -16,7 +17,7 @@ class WiseToolsMenu(OMenu):
         super().__init__(name="WISEr Tools")
 
         self.openContainer()
-        self.addContainer("Live Propagation Mode")
+        self.addContainer("Propagation Mode")
         self.addSubMenu("Element by Element")
         self.addSubMenu("Whole beamline at Detector")
         self.closeContainer()
@@ -26,7 +27,7 @@ class WiseToolsMenu(OMenu):
     def executeAction_1(self, action):
         try:
             PropagationManager.Instance().set_propagation_mode(WISE_APPLICATION, PropagationMode.STEP_BY_STEP)
-            showWarningMessage("Live Propagation Mode: Element by Element")
+            showWarningMessage("Propagation Mode: Element by Element")
 
             self.set_wise_live_propagation_mode()
         except Exception as exception:
@@ -35,18 +36,22 @@ class WiseToolsMenu(OMenu):
     def executeAction_2(self, action):
         try:
             PropagationManager.Instance().set_propagation_mode(WISE_APPLICATION, PropagationMode.WHOLE_BEAMLINE)
-            showWarningMessage("Live Propagation Mode: Whole beamline at Detector")
+            showWarningMessage("Propagation Mode: Whole beamline at Detector")
 
             self.set_wise_live_propagation_mode()
         except Exception as exception:
             showCriticalMessage(exception.args[0])
+            raise exception
 
     def set_wise_live_propagation_mode(self):
         for node in self.canvas_main_window.current_document().scheme().nodes:
             widget = self.canvas_main_window.current_document().scheme().widget_for_node(node)
 
-            if hasattr(widget, "wise_live_propagation_mode"): widget.set_wise_live_propagation_mode()
-
+            if hasattr(widget, "wise_live_propagation_mode"):
+                widget.set_wise_live_propagation_mode()
+                if not isinstance(widget, OWDetector) and (PropagationManager.Instance().get_propagation_mode(WISE_APPLICATION) == PropagationMode.WHOLE_BEAMLINE):
+                    widget.view_type = 0
+                    widget.set_ViewType()
 
     #################################################################
     #

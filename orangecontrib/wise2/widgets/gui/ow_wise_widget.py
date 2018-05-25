@@ -357,7 +357,7 @@ class WiseWidget(widget.OWWidget):
     def set_ViewType(self):
         self.progressBarInit()
 
-        if not self.plot_data==None:
+        if not self.plot_data is None:
             try:
                 self.initializeTabs()
 
@@ -463,7 +463,7 @@ class WiseWidget(widget.OWWidget):
 
             self.setStatusMessage("Error!")
 
-            #raise exception
+            raise exception
 
         self.progressBarFinished()
 

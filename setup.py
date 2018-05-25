@@ -8,11 +8,11 @@ except AttributeError:
     from setuptools import find_packages, setup
 
 
-NAME = 'OASYS1-WISE2'
+NAME = 'OASYS1-WISEr'
 VERSION = '1.0.1'
 ISRELEASED = True
 
-DESCRIPTION = 'WISE 2 in Python'
+DESCRIPTION = 'WISEr in Python'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.txt')
 LONG_DESCRIPTION = open(README_FILE).read()
 AUTHOR = 'Michele Manfredda, Lorenzo Raimondi, Luca Rebuffi'
@@ -44,6 +44,7 @@ INSTALL_REQUIRES = (
     'setuptools',
     'oasys1>=1.0.18',
     'wiselib2',
+    'wofry>=1.0.12'
     'wofrywise2'
 )
 

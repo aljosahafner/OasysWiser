@@ -1,2 +1,2 @@
 
-WISE 2 in OASYS
+WISEr in OASYS

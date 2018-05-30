@@ -18,16 +18,23 @@ from orangecontrib.wise2.util.wise_objects import WiseData
 from wiselib2.Fundation import PositioningDirectives
 import wiselib2.Optics as Optics
 
-from wofry.propagator.propagator import PropagationManager, PropagationMode
+from wofry.propagator.propagator import PropagationManager, PropagationMode, WavefrontDimension
 from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WISE_APPLICATION
 
 def initialize_propagator_1D():
-    PropagationManager.Instance().add_propagator(WisePropagator())
-    print("Propagation Manager is initialized")
+    propagation_manager = PropagationManager.Instance()
+
+    if not propagation_manager.is_initialized(WISE_APPLICATION):
+        if not propagation_manager.has_propagator(WisePropagator.HANDLER_NAME, WavefrontDimension.ONE): propagation_manager.add_propagator(WisePropagator())
+
+        propagation_manager.set_propagation_mode(WISE_APPLICATION, PropagationMode.STEP_BY_STEP)
+
+        propagation_manager.set_initialized(True)
+
 try:
     initialize_propagator_1D()
-except:
-    pass
+except Exception as e:
+    print("Error while initializing propagators", str(e))
 
 positioning_directives_what = [PositioningDirectives.What.Centre,
                                PositioningDirectives.What.UpstreamFocus,

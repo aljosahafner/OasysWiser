@@ -9,7 +9,7 @@ except AttributeError:
 
 
 NAME = 'OASYS1-WISEr'
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 ISRELEASED = True
 
 DESCRIPTION = 'WISEr in Python'
@@ -44,7 +44,7 @@ INSTALL_REQUIRES = (
     'setuptools',
     'oasys1>=1.0.18',
     'wiselib2',
-    'wofry>=1.0.12',
+    'wofry>=1.0.13',
     'wofrywise2'
 )
 

@@ -24,7 +24,7 @@ class OWFromWofryWavefront1d(WiseWidget):
     id = "FromWofryWavefront1d"
     description = "From Wofry Wavefront 1D"
     icon = "icons/from_wofry_wavefront_1d.png"
-    priority = 1
+    priority = 10
     category = ""
     keywords = ["wise", "gaussian"]
 

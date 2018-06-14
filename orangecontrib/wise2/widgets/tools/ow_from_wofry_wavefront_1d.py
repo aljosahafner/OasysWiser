@@ -66,7 +66,7 @@ class OWFromWofryWavefront1d(WiseWidget):
         if self.reset_phase:
             electric_fields = self.wofry_wavefront.get_amplitude()*rinorm + 0j
         else:
-            electric_fields = self.wofry_wavefront.get_amplitude()*rinorm + self.wofry_wavefront.get_phase()
+            electric_fields = self.wofry_wavefront.get_amplitude()*rinorm + 1j*self.wofry_wavefront.get_phase()
 
         self.wofry_wavefront.set_complex_amplitude(electric_fields)
 
@@ -129,11 +129,6 @@ class DummyElement(Optics.SourceGaussian):
     def EvalField_XYSelf(self, z = numpy.array(None) , r = numpy.array(None)):
         electric_fields = self.wofry_wavefront.get_interpolated_complex_amplitudes(r)
         #electric_fields = self.wofry_wavefront.get_interpolated_amplitudes(r)
-
-        from matplotlib import pyplot as plt
-        plt.plot(r, numpy.real(electric_fields))
-        plt.plot(r, numpy.imag(electric_fields))
-        plt.show()
 
         return electric_fields*super(DummyElement, self).EvalField_XYSelf(z, r)
 

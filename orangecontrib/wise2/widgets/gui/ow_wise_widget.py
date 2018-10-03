@@ -470,10 +470,9 @@ class WiseWidget(widget.OWWidget):
 
             self.setStatusMessage("Error!")
 
-            #raise exception
+            raise exception
 
         self.progressBarFinished()
-
 
     def defaults(self):
          self.resetSettings()

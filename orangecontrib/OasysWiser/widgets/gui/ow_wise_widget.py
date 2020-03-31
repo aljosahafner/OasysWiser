@@ -12,14 +12,14 @@ from oasys.widgets import widget
 from oasys.widgets import gui as oasysgui
 from oasys.util.oasys_util import EmittingStream
 
-from orangecontrib.wise2.util.wise_util import WisePlot
-from orangecontrib.wise2.util.wise_objects import WiseData
+from orangecontrib.OasysWiser.util.wise_util import WisePlot
+from orangecontrib.OasysWiser.util.wise_objects import WiseData
 
-from wiselib2.Fundation import PositioningDirectives
-import wiselib2.Optics as Optics
+from LibWiser.Foundation import PositioningDirectives
+import LibWiser.Optics as Optics
 
 from wofry.propagator.propagator import PropagationManager, PropagationMode, WavefrontDimension
-from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WISE_APPLICATION
+from WofryWiser.propagator.propagator1D.wise_propagator import WisePropagator, WISE_APPLICATION
 
 def initialize_propagator_1D():
     propagation_manager = PropagationManager.Instance()

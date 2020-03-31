@@ -20,13 +20,13 @@ class WisePreInputData:
         self.figure_user_units_to_m = figure_user_units_to_m
 
         self.roughness_file = roughness_file
-        self.roughness_x_scaling =roughness_x_scaling
+        self.roughness_x_scaling = roughness_x_scaling
         self.roughness_y_scaling = roughness_y_scaling
 
 
-from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagationElements
-from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
-from wofrywise2.beamline.wise_beamline_element import WiseBeamlineElement, WiseOpticalElement
+from WofryWiser.propagator.propagator1D.wise_propagator import WisePropagationElements
+from WofryWiser.propagator.wavefront1D.wise_wavefront import WiseWavefront
+from WofryWiser.beamline.beamline_elements import WiserBeamlineElement, WiserOpticalElement
 
 import copy
 
@@ -45,7 +45,7 @@ class WiseData(object):
             duplicated_wise_beamline = WisePropagationElements()
             for beamline_element in self.wise_beamline.get_propagation_elements():
                 duplicated_wise_optical_element = copy.deepcopy(beamline_element.get_optical_element().wise_optical_element)
-                duplicated_wise_beamline.add_beamline_element(WiseBeamlineElement(optical_element=WiseOpticalElement(wise_optical_element=duplicated_wise_optical_element)))
+                duplicated_wise_beamline.add_beamline_element(WiserBeamlineElement(optical_element=WiserOpticalElement(native_OpticalElement=duplicated_wise_optical_element)))
 
         duplicated_wise_wavefront = None
         if not self.wise_wavefront is None:

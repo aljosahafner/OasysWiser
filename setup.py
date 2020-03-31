@@ -41,17 +41,17 @@ SETUP_REQUIRES = (
 )
 
 INSTALL_REQUIRES = (
-    'wiselib2',
+    'LibWiser',
     'oasys1>=1.1.19',
-    'wofrywise2>=1.0.1'
+    'WofryWiser'
 )
 
 PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
 
 PACKAGE_DATA = {
-    "orangecontrib.wise2.widgets.light_sources":["icons/*.png", "icons/*.jpg"],
-    "orangecontrib.wise2.widgets.optical_elements":["icons/*.png", "icons/*.jpg"],
-    "orangecontrib.wise2.widgets.tools":["icons/*.png", "icons/*.jpg"],
+    "orangecontrib.OasysWiser.widgets.light_sources":["icons/*.png", "icons/*.jpg"],
+    "orangecontrib.OasysWiser.widgets.optical_elements":["icons/*.png", "icons/*.jpg"],
+    "orangecontrib.OasysWiser.widgets.tools":["icons/*.png", "icons/*.jpg"],
 }
 
 NAMESPACE_PACAKGES = ["orangecontrib", "orangecontrib.wise2", "orangecontrib.wise2.widgets"]
@@ -59,11 +59,11 @@ NAMESPACE_PACAKGES = ["orangecontrib", "orangecontrib.wise2", "orangecontrib.wis
 ENTRY_POINTS = {
     'oasys.addons' : ("wise = orangecontrib.wise", ),
     'oasys.widgets' : (
-        "WISEr Light Sources = orangecontrib.wise2.widgets.light_sources",
-        "WISEr Optical Elements = orangecontrib.wise2.widgets.optical_elements",
-        "WISEr Tools = orangecontrib.wise2.widgets.tools",
+        "WISEr Light Sources = orangecontrib.OasysWiser.widgets.light_sources",
+        "WISEr Optical Elements = orangecontrib.OasysWiser.widgets.optical_elements",
+        "WISEr Tools = orangecontrib.OasysWiser.widgets.tools",
     ),
-    'oasys.menus' : ("wisemenu = orangecontrib.wise2.menu",)
+    'oasys.menus' : ("wisemenu = orangecontrib.OasysWiser.menu",)
 }
 
 if __name__ == '__main__':

@@ -13,12 +13,12 @@ from syned.beamline.optical_elements.mirrors.mirror import Mirror
 
 from wofry.propagator.propagator import PropagationManager, PropagationParameters, PropagationMode
 
-from wofrywise2.propagator.propagator1D.wise_propagator import WisePropagator, WisePropagationElements, WISE_APPLICATION
-from wofrywise2.propagator.wavefront1D.wise_wavefront import WiseWavefront
-from wofrywise2.beamline.wise_beamline_element import WiseBeamlineElement
+from WofryWiser.propagator.propagator1D.wise_propagator import WisePropagator, WisePropagationElements, WISE_APPLICATION
+from WofryWiser.propagator.wavefront1D.wise_wavefront import WiseWavefront
+from WofryWiser.beamline.beamline_elements import WiserBeamlineElement
 
-from orangecontrib.wise2.util.wise_objects import WiseData, WisePreInputData
-from orangecontrib.wise2.widgets.gui.ow_wise_widget import WiseWidget, ElementType
+from orangecontrib.OasysWiser.util.wise_objects import WiseData, WisePreInputData
+from orangecontrib.OasysWiser.widgets.gui.ow_wise_widget import WiseWidget, ElementType
 
 class OWOpticalElement(WiseWidget, WidgetDecorator):
     category = ""
@@ -367,7 +367,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
         if output_data.wise_beamline is None: output_data.wise_beamline = WisePropagationElements()
 
-        output_data.wise_beamline.add_beamline_element(WiseBeamlineElement(optical_element=optical_element))
+        output_data.wise_beamline.add_beamline_element(WiserBeamlineElement(optical_element=optical_element))
 
         parameters = PropagationParameters(wavefront=input_wavefront if not input_wavefront is None else WiseWavefront(wise_computation_results=None),
                                            propagation_elements=output_data.wise_beamline)

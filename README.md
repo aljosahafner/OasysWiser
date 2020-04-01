@@ -1,5 +1,5 @@
 # Wiser for OASYS
-===========================================================
+----------
 
 OasysWiser is the GUI part of Wiser in Oasys. It is a reboot of OASYS1-WISE2.
 

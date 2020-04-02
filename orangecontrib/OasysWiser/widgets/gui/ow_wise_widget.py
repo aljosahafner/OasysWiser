@@ -12,8 +12,8 @@ from oasys.widgets import widget
 from oasys.widgets import gui as oasysgui
 from oasys.util.oasys_util import EmittingStream
 
-from orangecontrib.OasysWiser.util.wise_util import WisePlot
-from orangecontrib.OasysWiser.util.wise_objects import WiseData
+from orangecontrib.OasysWiser.util.wise_util import WiserPlot
+from orangecontrib.OasysWiser.util.wise_objects import WiserData
 
 from LibWiser.Foundation import PositioningDirectives
 import LibWiser.Optics as Optics
@@ -67,8 +67,8 @@ class WiseWidget(widget.OWWidget):
     author = "Luca Rebuffi"
     maintainer_email = "luca.rebuffi@elettra.eu"
 
-    outputs = [{"name": "WiseData",
-                "type": WiseData,
+    outputs = [{"name": "WiserData",
+                "type": WiserData,
                 "doc": ""}]
 
     IMAGE_WIDTH = 760
@@ -429,7 +429,7 @@ class WiseWidget(widget.OWWidget):
 
             self.tab[tabs_canvas_index].layout().addWidget(self.plot_canvas[plot_canvas_index])
 
-        WisePlot.plot_histo(self.plot_canvas[plot_canvas_index], x, y, title, xtitle, ytitle)
+        WiserPlot.plot_histo(self.plot_canvas[plot_canvas_index], x, y, title, xtitle, ytitle)
 
         self.progressBarSet(progressBarValue)
 

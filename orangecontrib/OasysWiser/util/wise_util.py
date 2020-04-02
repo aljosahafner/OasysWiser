@@ -12,7 +12,9 @@ except ImportError:
     print(sys.exc_info()[1])
     pass
 
-class WisePlot:
+from LibWiser.ToolLib import CommonPlots as LibWiserPlot
+
+class WiserPlot:
 
     @classmethod
     def plot_histo(cls, plot_window, x, y, title, xtitle, ytitle):
@@ -25,6 +27,12 @@ class WisePlot:
         plot_window.setInteractiveMode(mode='zoom')
         plot_window.resetZoom()
         plot_window.replot()
+
+    def IntensityAtOE(self, **kwargs):
+        return LibWiserPlot.IntensityAtOpticalElement(self, **kwargs)
+
+    ### TODO: put other plots here as well, or just overwrite WiserPlot with CommonPlots as WiserPlot
+
 
 from PyQt5 import QtWidgets
 

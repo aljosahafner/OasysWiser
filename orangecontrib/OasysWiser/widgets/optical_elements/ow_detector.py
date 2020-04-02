@@ -12,11 +12,13 @@ from orangewidget.settings import Setting
 
 from syned.widget.widget_decorator import WidgetDecorator
 
-from wiselib2 import Fundation, Optics
+from LibWiser import Foundation, Optics
 
-from wofrywise2.beamline.optical_elements.wise_detector import WiseDetector
+from WofryWiser.beamline.beamline_elements import WiserOpticalElement
 
-from orangecontrib.wise2.widgets.gui.ow_optical_element import OWOpticalElement
+from orangecontrib.OasysWiser.widgets.gui.ow_optical_element import OWOpticalElement
+
+WiseDetector = WiserOpticalElement()
 
 class OWDetector(OWOpticalElement, WidgetDecorator):
     name = "Detector"
@@ -101,9 +103,10 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
                                AngleGrazing = numpy.deg2rad(self.alpha))
 
     def get_optical_element(self, inner_wise_optical_element):
-         return WiseDetector(name= self.oe_name,
-                             detector=inner_wise_optical_element,
-                             position_directives=self.get_PositionDirectives())
+         return WiserOpticalElement(name=self.oe_name,
+                                    boundary_shape=None,
+                                    native_CoreOptics=inner_wise_optical_element,
+                                    native_PositioningDirectives=self.Get_PositionDirectives())
 
 
     def receive_specific_syned_data(self, optical_element):
@@ -216,9 +219,9 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
                         if not self.best_focus_slider is None: self.best_focus_slider.valueChanged.connect(self.plot_detail)
                         return
 
-                    ResultList, HewList, SigmaList, More = Fundation.FocusSweep(last_element, [self.defocus_list[i]],
-                                                                               DetectorSize = self.length*self.workspace_units_to_m,
-                                                                               NPools = n_pools)
+                    ResultList, HewList, SigmaList, More = Foundation.FocusSweep(last_element, [self.defocus_list[i]],
+                                                                                 DetectorSize = self.length*self.workspace_units_to_m,
+                                                                                 NPools = n_pools)
 
                     S = ResultList[0].S
                     E = ResultList[0].Field
@@ -257,10 +260,10 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
                     elif hew == hew_min:
                         index_min_list.append(i)
             else: # NOT INTERACTIVE
-                ResultList, HewList, SigmaList, More = Fundation.FocusSweep(last_element,
-                                                                            self.defocus_list,
-                                                                            DetectorSize = self.length*self.workspace_units_to_m,
-                                                                            NPools = n_pools)
+                ResultList, HewList, SigmaList, More = Foundation.FocusSweep(last_element,
+                                                                             self.defocus_list,
+                                                                             DetectorSize = self.length*self.workspace_units_to_m,
+                                                                             NPools = n_pools)
 
                 i=0
                 for Result, HEW in zip(ResultList, HewList):

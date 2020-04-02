@@ -1,5 +1,4 @@
-
-class WisePreInputData:
+class WiserPreInputData:
 
     NONE = "None"
 
@@ -30,7 +29,7 @@ from WofryWiser.beamline.beamline_elements import WiserBeamlineElement, WiserOpt
 
 import copy
 
-class WiseData(object):
+class WiserData(object):
     
     def __init__(self, wise_beamline=WisePropagationElements(), wise_wavefront=WiseWavefront()):
         super().__init__()
@@ -51,5 +50,5 @@ class WiseData(object):
         if not self.wise_wavefront is None:
             duplicated_wise_wavefront = WiseWavefront(wise_computation_results=copy.deepcopy(self.wise_wavefront.wise_computation_result))
 
-        return WiseData(wise_beamline=duplicated_wise_beamline,
-                        wise_wavefront=duplicated_wise_wavefront)
+        return WiserData(wise_beamline=duplicated_wise_beamline,
+                         wise_wavefront=duplicated_wise_wavefront)

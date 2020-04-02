@@ -17,14 +17,14 @@ from WofryWiser.propagator.propagator1D.wise_propagator import WisePropagator, W
 from WofryWiser.propagator.wavefront1D.wise_wavefront import WiseWavefront
 from WofryWiser.beamline.beamline_elements import WiserBeamlineElement
 
-from orangecontrib.OasysWiser.util.wise_objects import WiseData, WisePreInputData
+from orangecontrib.OasysWiser.util.wise_objects import WiserData, WiserPreInputData
 from orangecontrib.OasysWiser.widgets.gui.ow_wise_widget import WiseWidget, ElementType
 
 class OWOpticalElement(WiseWidget, WidgetDecorator):
     category = ""
     keywords = ["wise", "mirror"]
 
-    inputs = [("Input", WiseData, "set_input"), ("PreInput", WisePreInputData, "set_pre_input")]
+    inputs = [("Input", WiserData, "set_input"), ("PreInput", WiserPreInputData, "set_pre_input")]
 
     WidgetDecorator.append_syned_input_data(inputs)
 
@@ -273,7 +273,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
     def set_pre_input(self, data):
         if data is not None:
             try:
-                if data.figure_error_file != WisePreInputData.NONE:
+                if data.figure_error_file != WiserPreInputData.NONE:
                     self.figure_error_file = data.figure_error_file
                     self.figure_error_step = data.figure_error_step
                     self.figure_error_um_conversion = data.figure_user_units_to_m
@@ -281,7 +281,7 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
                     self.set_UseFigureError()
 
-                if data.roughness_file != WisePreInputData.NONE:
+                if data.roughness_file != WiserPreInputData.NONE:
                     self.roughness_file=data.roughness_file
                     self.roughness_x_scaling = data.roughness_x_scaling
                     self.roughness_y_scaling = data.roughness_y_scaling
@@ -322,30 +322,30 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
         optical_element = self.get_optical_element(self.get_inner_wise_optical_element())
 
-        wise_optical_element = optical_element.wise_optical_element
+        native_optical_element = optical_element.native_optical_element
 
-        wise_optical_element.CoreOptics.ComputationSettings.Ignore = (self.ignore == 1)
+        native_optical_element.CoreOptics.ComputationSettings.Ignore = (self.ignore == 1)
 
         if self.use_small_displacements == 1:
-            wise_optical_element.CoreOptics.ComputationSettings.UseSmallDisplacements = True # serve per traslare/ruotare l'EO
-            wise_optical_element.CoreOptics.SmallDisplacements.Rotation = numpy.deg2rad(self.rotation)
-            wise_optical_element.CoreOptics.SmallDisplacements.Trans = self.transverse*self.workspace_units_to_m # Transverse displacement (rispetto al raggio uscente, magari faremo scegliere)
-            wise_optical_element.CoreOptics.SmallDisplacements.Long = self.longitudinal*self.workspace_units_to_m # Longitudinal displacement (idem)
+            native_optical_element.CoreOptics.ComputationSettings.UseSmallDisplacements = True # serve per traslare/ruotare l'EO
+            native_optical_element.CoreOptics.SmallDisplacements.Rotation = numpy.deg2rad(self.rotation)
+            native_optical_element.CoreOptics.SmallDisplacements.Trans = self.transverse*self.workspace_units_to_m # Transverse displacement (rispetto al raggio uscente, magari faremo scegliere)
+            native_optical_element.CoreOptics.SmallDisplacements.Long = self.longitudinal*self.workspace_units_to_m # Longitudinal displacement (idem)
         else:
-            wise_optical_element.CoreOptics.ComputationSettings.UseSmallDisplacements = False
-            wise_optical_element.CoreOptics.SmallDisplacements.Rotation = 0.0
-            wise_optical_element.CoreOptics.SmallDisplacements.Trans = 0.0
-            wise_optical_element.CoreOptics.SmallDisplacements.Long = 0.0
+            native_optical_element.CoreOptics.ComputationSettings.UseSmallDisplacements = False
+            native_optical_element.CoreOptics.SmallDisplacements.Rotation = 0.0
+            native_optical_element.CoreOptics.SmallDisplacements.Trans = 0.0
+            native_optical_element.CoreOptics.SmallDisplacements.Long = 0.0
 
         if self.use_figure_error == 1:
-            wise_optical_element.CoreOptics.ComputationSettings.UseFigureError = True
+            native_optical_element.CoreOptics.ComputationSettings.UseFigureError = True
 
-            wise_optical_element.CoreOptics.FigureErrorLoad(File = self.figure_error_file,
-                                                            Step = self.figure_error_step * self.workspace_units_to_m, # passo del file
-                                                            AmplitudeScaling = self.figure_error_amplitude_scaling * self.figure_error_um_conversion # fattore di scala
-                                                           )
+            native_optical_element.CoreOptics.FigureErrorLoad(File = self.figure_error_file,
+                                                              Step = self.figure_error_step * self.workspace_units_to_m, # passo del file
+                                                              AmplitudeScaling = self.figure_error_amplitude_scaling * self.figure_error_um_conversion # fattore di scala
+                                                              )
         else:
-            wise_optical_element.CoreOptics.ComputationSettings.UseFigureError = False
+            native_optical_element.CoreOptics.ComputationSettings.UseFigureError = False
 
         if self.use_roughness == 1:
             self.use_roughness = 0
@@ -353,14 +353,14 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
             raise NotImplementedError("Roughness Not yet supported")
         else:
-            wise_optical_element.CoreOptics.ComputationSettings.UseRoughness = False
+            native_optical_element.CoreOptics.ComputationSettings.UseRoughness = False
 
         if self.calculation_type == 0:
-            wise_optical_element.ComputationSettings.UseCustomSampling = False
+            native_optical_element.ComputationSettings.UseCustomSampling = False
         else:
             # l'utente decide di impostare a mano il campionamento
-            wise_optical_element.ComputationSettings.UseCustomSampling = True
-            wise_optical_element.ComputationSettings.NSamples = self.number_of_points
+            native_optical_element.ComputationSettings.UseCustomSampling = True
+            native_optical_element.ComputationSettings.NSamples = self.number_of_points
 
         output_data = self.input_data.duplicate()
         input_wavefront = output_data.wise_wavefront

@@ -18,9 +18,9 @@ from WofryWiser.propagator.wavefront1D.wise_wavefront import WiseWavefront
 from WofryWiser.beamline.beamline_elements import WiserBeamlineElement
 
 from orangecontrib.OasysWiser.util.wise_objects import WiserData, WiserPreInputData
-from orangecontrib.OasysWiser.widgets.gui.ow_wise_widget import WiseWidget, ElementType
+from orangecontrib.OasysWiser.widgets.gui.ow_wise_widget import WiserWidget, ElementType
 
-class OWOpticalElement(WiseWidget, WidgetDecorator):
+class OWOpticalElement(WiserWidget, WidgetDecorator):
     category = ""
     keywords = ["wise", "mirror"]
 
@@ -544,3 +544,12 @@ class OWOpticalElement(WiseWidget, WidgetDecorator):
 
     def receive_specific_syned_data(self, optical_element):
         raise NotImplementedError()
+
+import sys
+
+if __name__ == "__main__":
+    a = QApplication(sys.argv)
+    ow = WiserWidget()
+    ow.show()
+    a.exec_()
+    ow.saveSettings()

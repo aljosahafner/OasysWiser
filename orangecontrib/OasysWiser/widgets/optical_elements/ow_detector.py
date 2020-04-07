@@ -100,7 +100,7 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
 
     def get_inner_wise_optical_element(self):
         return Optics.Detector(L=self.length*self.workspace_units_to_m,
-                               AngleGrazing = numpy.deg2rad(self.alpha))
+                               AngleGrazing=numpy.deg2rad(self.alpha))
 
     def get_optical_element(self, inner_wise_optical_element):
          return WiserOpticalElement(name=self.oe_name,
@@ -430,3 +430,12 @@ class OWDetector(OWOpticalElement, WidgetDecorator):
             QMessageBox.critical(self, "Error", str(exception), QMessageBox.Ok)
 
             self.setStatusMessage("Error!")
+
+from PyQt5.QtWidgets import QApplication, QMessageBox, QInputDialog
+
+if __name__ == "__main__":
+    a = QApplication(sys.argv)
+    ow = OWDetector()
+    ow.show()
+    a.exec_()
+    ow.saveSettings()
